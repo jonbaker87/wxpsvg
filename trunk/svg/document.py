@@ -573,7 +573,6 @@ class SVGDocument(object):
             path.AddPath(npath)
             #npath.MoveToPoint(x,y)
             
-            
         elif type == 'Z':
             #~ Bugginess:
             #~ CloseSubpath() doesn't change the
