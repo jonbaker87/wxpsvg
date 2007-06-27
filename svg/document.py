@@ -2,7 +2,7 @@
     SVGDocument
 """
 import wx
-import xml.etree.cElementTree as etree
+
 from cStringIO import StringIO
 import warnings
 import math
@@ -91,10 +91,9 @@ def pathHandler(func):
 
 class SVGDocument(object):
     lastControl = None
-    def __init__(self, xmlbuffer):
+    def __init__(self, element):
         """
-            Create an SVG document from an xml description
-            
+        Create an SVG document from an ElementTree node.
         """
         self.handlers = {
             '{http://www.w3.org/2000/svg}svg':self.addGroupToDocument,
@@ -109,23 +108,27 @@ class SVGDocument(object):
             '{http://www.w3.org/2000/svg}path':self.addPathDataToDocument,
             '{http://www.w3.org/2000/svg}text':self.addTextToDocument
         }
-        self.tree = etree.parse(xmlbuffer)
+        
+        assert element.tag == '{http://www.w3.org/2000/svg}svg', 'Not an SVG fragment'
+        self.tree = element
         self.paths = {}
         self.stateStack = [{}]
-        try:
-            path, ops = self.processElement(self.tree.getroot())
-            self.ops = ops
-        except:
-            import traceback
-            traceback.print_exc()
-        
-        
-        
+        path, ops = self.processElement(element)
+        self.ops = ops
+
     @property
     def state(self):
+        """ Retrieve the current state, without popping"""
         return self.stateStack[-1]
         
     def processElement(self, element):
+        """ Process one element of the XML tree.
+        Returns the path representing the node,
+        and an operation list for drawing the node.
+        
+        Parent nodes should return a path (for hittesting), but
+        no draw operations
+        """
         current = dict(self.state)
         current.update(element.items())
         current.update(css.inlineStyle(element.get("style", "")))
@@ -145,6 +148,7 @@ class SVGDocument(object):
         """
         ops = []
         transform = node.get('transform')
+        #todo: replace this with a mapping list
         if transform:
             for transform, args in css.transformList.parseString(transform):
                 if transform == 'scale':
@@ -205,6 +209,9 @@ class SVGDocument(object):
         
     
     def addGroupToDocument(self, node):
+        """ For parent elements: push on a state,
+        then process all child elements
+        """
         ops = [
             (wx.GraphicsContext.PushState, ())
         ]
@@ -230,6 +237,7 @@ class SVGDocument(object):
         if family:
             font.SetFaceName(family)
         size = self.state.get("font-size")
+        #I'm not sure if this is right or not
         if size:
             font.SetPixelSize(wx.Size(int(size), int(size)))
         return font
@@ -246,7 +254,7 @@ class SVGDocument(object):
             context.DrawText(text, x, y)
         font = self.getFontFromState()
         brush = self.getBrushFromState()
-        text = node.text
+        text = str(node.text)
         ops = [
             (wx.GraphicsContext.SetFont, (font,)),
             (wx.GraphicsContext.SetBrush, (brush,)),
@@ -319,6 +327,14 @@ class SVGDocument(object):
         self.lastControlQ = None
         self.firstPoints = []
         def normalizeStrokes(parseResults):
+            """ The data comes from the parser in the
+            form of (command, [list of arguments]).
+            We translate that to [(command, args[0]), (command, args[1])]
+            via a generator.
+            
+            M is special cased because it's subsequent arguments
+            become linetos.
+            """
             for command, arguments in parseResults:
                 if not arguments:
                     yield (command, ())
@@ -336,6 +352,8 @@ class SVGDocument(object):
             self.addStrokeToPath(path, stroke)
         
     def generatePathOps(self, path):
+        """ Look at the current state and generate the 
+        draw operations (fill, stroke, neither) for the path"""
         ops = []
         brush = self.getBrushFromState()
         fillRule = self.state.get('fill-rule', 'nonzero')
@@ -393,6 +411,13 @@ class SVGDocument(object):
         )
         
     def addStrokeToPath(self, path, stroke):
+        """ Given a stroke from a path command
+        (in the form (command, arguments)) create the path
+        commands that represent it.
+        
+        TODO: break out into (yet another) class/module,
+        especially so we can get O(1) dispatch on type?
+        """
         type, arg = stroke
         relative = False
         if type == type.lower():
@@ -509,7 +534,11 @@ class SVGDocument(object):
             
             temp = ((rx**2) * (ry**2)) - ((rx**2) * (yPrime**2)) - ((ry**2) * (xPrime**2))
             temp /= ((rx**2) * (yPrime**2)) + ((ry**2)*(xPrime**2))
-            temp = math.sqrt(temp)
+            try:
+                temp = math.sqrt(temp)
+            except ValueError:
+                import pdb
+                pdb.set_trace()
             cxPrime = temp * ((rx * yPrime) / ry)
             cyPrime = temp * -((ry * xPrime) / rx)
             if fa == fs:
