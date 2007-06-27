@@ -62,9 +62,14 @@ class RenderPanel(wx.PyPanel):
         wx.PyPanel.__init__(self, parent)
         self.document = document
         self.zoom = 100
+        self.offset = wx.Point(0,0)
         #self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_MOUSEWHEEL, self.OnWheel)
+        self.Bind(wx.EVT_MOTION, self.OnMotion)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
+        self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+        self.Bind(wx.EVT_MIDDLE_UP, self.OnMiddleClick)
         
     def OnPaint(self, evt):
         dc = wx.PaintDC(self)
@@ -72,7 +77,10 @@ class RenderPanel(wx.PyPanel):
             return
         gc = wx.GraphicsContext_Create(dc)
         scale = float(self.zoom) / 100.0
+        
+        gc.Translate(*self.offset)
         gc.Scale(scale, scale)
+        
         self.document.render(gc)
         
     def GetBestSize(self):
@@ -84,6 +92,30 @@ class RenderPanel(wx.PyPanel):
     def OnWheel(self, evt):
         self.zoom += (evt.m_wheelRotation / evt.m_wheelDelta) * 10
         self.Refresh()
+    
+    def OnLeftDown(self, evt):
+        self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
+        self.CaptureMouse()
+        self.offsetFrom = evt.GetPosition()
+    
+    def OnLeftUp(self, evt):
+        if self.HasCapture():
+            self.ReleaseMouse()
+        self.SetCursor(wx.NullCursor)
+        
+    def OnMotion(self, evt):
+        if not self.HasCapture():
+            return
+        self.offset += (evt.GetPosition() - self.offsetFrom)
+        self.offsetFrom = evt.GetPosition()
+        self.Refresh()
+    def OnMiddleClick(self, evt):
+        self.offset = wx.Point(0,0)
+        self.zoom = 100
+        self.Refresh()
+            
+        
+    
         
     
 class ViewFrame(wx.Frame):
