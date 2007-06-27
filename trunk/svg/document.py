@@ -9,7 +9,7 @@ import math
 
 import pathdata
 import css
-from colour import FindColour, rgb
+from css.colour import colourValue
 
 document = """<?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
@@ -133,7 +133,7 @@ class SVGDocument(object):
         current.update(element.items())
         current.update(css.inlineStyle(element.get("style", "")))
         self.stateStack.append(current)
-        handler = self.handlers.get(element.tag, lambda *any: (None, None))        
+        handler = self.handlers.get(element.tag, lambda *any: (None, None))
         path, ops = handler(element)
         self.paths[element] = path
         self.stateStack.pop()
@@ -254,7 +254,10 @@ class SVGDocument(object):
             context.DrawText(text, x, y)
         font = self.getFontFromState()
         brush = self.getBrushFromState()
-        text = str(node.text)
+        text = node.text
+        if text is None:
+            return None, []
+        print type(node.text)
         ops = [
             (wx.GraphicsContext.SetFont, (font,)),
             (wx.GraphicsContext.SetBrush, (brush,)),
@@ -379,9 +382,20 @@ class SVGDocument(object):
         
     def getPenFromState(self):
         pencolour = self.state.get('stroke', 'none')
-        if not pencolour or pencolour == 'none':
+        if pencolour == 'currentColor':
+            pencolour = self.state.get('color', 'none')
+        if pencolour == 'transparent':
+            return wx.TRANSPARENT_PEN
+        if pencolour == 'none':
             return wx.NullPen
-        pen = wx.Pen(wxColourFromCSS(pencolour))
+        type, value = colourValue.parseString(pencolour)
+        if type == 'URL':
+            warnings.warn("Color servers for stroking not implemented")
+            return wx.NullPen
+        else:
+            if value[:3] == (-1, -1, -1):
+                return wx.NullPen
+            pen = wx.Pen(wx.Colour(*value))
         width = self.state.get('stroke-width')
         if width:
             pen.SetWidth(float(width))
@@ -400,15 +414,27 @@ class SVGDocument(object):
         return wx.GraphicsRenderer_GetDefaultRenderer().CreatePen(pen)
             
     def getBrushFromState(self):
-        brushcolour = self.state.get('fill', 'none')
+        brushcolour = self.state.get('fill', 'none').strip()
         if brushcolour == 'currentColor':
             brushcolour = self.state.get('color', 'none')
+        if brushcolour == 'transparent':
+            return wx.TRANSPARENT_BRUSH
         if brushcolour == 'none':
             return wx.NullBrush
-        brushcolour = wxColourFromCSS(brushcolour)
-        return wx.GraphicsRenderer_GetDefaultRenderer().CreateBrush(
-            wx.Brush(brushcolour)
-        )
+        type, value = colourValue.parseString(brushcolour)
+        if type == 'URL':
+            warnings.warn("Color server not yet implemented")
+            return wx.NullBrush
+        else:
+            if value[:3] == (-1, -1, -1):
+                return wx.NullBrush
+            r, g, b = value
+        opacity = self.state.get('fill-opacity', self.state.get('opacity', '1'))
+        opacity = float(opacity)
+        opacity = min(max(opacity, 0.0), 1.0)
+        a = 255 * opacity
+        return wx.Brush(wx.Colour(r,g,b,a))
+        
         
     def addStrokeToPath(self, path, stroke):
         """ Given a stroke from a path command
@@ -504,11 +530,12 @@ class SVGDocument(object):
             #wxGC currently only supports circular arcs,
             #not eliptical ones
             
-            #angle is *in degrees*
-            ((rx, ry), #radii of ellipse
-            angle, #angle of rotation on the ellipse
+            (
+            (rx, ry), #radii of ellipse
+            angle, #angle of rotation on the ellipse in degrees
             (fa, fs), #arc and stroke angle flags
-            (x, y)) = arg #endpoint on the arc
+            (x, y)
+            ) = arg #endpoint on the arc
             
             x, y = normalizePoint((x,y))
             cx, cy = path.GetCurrentPoint()
@@ -534,6 +561,7 @@ class SVGDocument(object):
             
             temp = ((rx**2) * (ry**2)) - ((rx**2) * (yPrime**2)) - ((ry**2) * (xPrime**2))
             temp /= ((rx**2) * (yPrime**2)) + ((ry**2)*(xPrime**2))
+            temp = abs(temp)
             try:
                 temp = math.sqrt(temp)
             except ValueError:
