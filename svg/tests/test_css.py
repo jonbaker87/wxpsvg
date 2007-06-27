@@ -1,6 +1,8 @@
 import unittest
 from pyparsing import ParseException
-from css import *
+
+from svg.css.transform import *
+import svg.css.colour as colour
 
 #list of tuples: parser, string, result
 transformTestsGood = [
@@ -17,21 +19,7 @@ transformTestsError = [
     (rotate, "rotate"),
 ]
 
-class TestCSSParsing(unittest.TestCase):
-    def testTestsGood(self):
-        for parser, string, result in transformTestsGood:
-            self.assertEqual(
-                parser.parseString(string).asList(),
-                result
-            )
-    def testTestsError(self):
-        for parser, string in transformTestsError:
-            self.assertRaises(
-                ParseException,
-                parser.parseString,
-                string
-            )
-class TestTransform(unittest.TestCase):
+class TestTransformParser(unittest.TestCase):
     def testTransformList(self):
         self.assertEqual(
             transformList.parseString(
@@ -56,7 +44,97 @@ class TestTransform(unittest.TestCase):
                 transform.parseString,
                 string
             ) 
+    def testPartsGood(self):
+        for parser, string, result in transformTestsGood:
+            self.assertEqual(
+                parser.parseString(string).asList(),
+                result
+            )
+    def testPartsError(self):
+        for parser, string in transformTestsError:
+            self.assertRaises(
+                ParseException,
+                parser.parseString,
+                string
+            )
+
+    
+            
+class testColourValueClamping(unittest.TestCase):
+    def testByte(self):
+        self.assertEqual(
+            100,
+            colour.clampColourByte(100)
+        )
+        self.assertEqual(
+            0,
+            colour.clampColourByte(-100)
+        )
+        self.assertEqual(
+            255,
+            colour.clampColourByte(300)
+        )
         
+class testRGBParsing(unittest.TestCase):
+    parser = colour.rgb
+    def testRGBByte(self):
+        self.assertEqual(
+            self.parser.parseString("rgb(300,45,100)").asList(),
+            ["RGB", [255,45,100]]
+        )
+    def testRGBPerc(self):
+        self.assertEqual(
+            self.parser.parseString("rgb(100%,0%,0.1%)").asList(),
+            ["RGB", [255,0,0]]
+        )
         
+class testHexParsing(unittest.TestCase):
+    parser = colour.hexLiteral
+    def testHexLiteralShort(self):
+        self.assertEqual(
+            self.parser.parseString("#fab").asList(),
+            ["RGB", (0xff, 0xaa, 0xbb)]
+        )
+    def testHexLiteralLong(self):
+        self.assertEqual(
+            self.parser.parseString("#f0a1b2").asList(),
+            ["RGB", [0xf0, 0xa1, 0xb2]]
+        )
+    def testHexLiteralBroken(self):
+        self.assertRaises(
+            ParseException,
+            self.parser.parseString,
+            "#fab0"
+        )
+        self.assertRaises(
+            ParseException,
+            self.parser.parseString,
+            "#fab0102d"
+        )
+        self.assertRaises(
+            ParseException,
+            self.parser.parseString,
+            "#gab"
+        )
+
+class TestNamedColours(unittest.TestCase):
+    parser = colour.namedColour
+    def testNamedColour(self):
+        self.assertEqual(
+            self.parser.parseString("fuchsia").asList(),
+            ["NAMED", (0xFF, 0, 0xFF)]
+        )
+class TestURLColour(unittest.TestCase):
+    parser = colour.url
+    def testURL(self):
+        self.assertEqual(
+            self.parser.parseString("url(#someGradient)").asList(),
+            ["URL", ('', '', '', '', "someGradient")]
+        )
         
+class TestValueParserNamed(TestNamedColours):
+    parser = colour.colourValue
         
+    
+    
+    
