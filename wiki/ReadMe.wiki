@@ -15,4 +15,8 @@
   * the control should have some convenience methods to make hittesting convenient
   * Better performance (rendering is about as fast as it can be, need to optmize parsing)
 
+=Requirements=
+  *Python 2.5 (2.4 may work, untested)
+  *wxWidgets 2.8.4 (anythign with wxGraphicsContext should work, but newer is better)
+  *[http://pyparsing.wikispaces.com/ pyparsing] 1.4.6 (older will *not* work)
 
