@@ -1,11 +1,17 @@
 import os
+import time
+import pdb
 from cStringIO import StringIO
+import xml.etree.cElementTree as etree
 
 import wx
 import wx.aui
 from wx.lib.mixins import treemixin
 
 import svg.document as document
+
+
+
 
 class ReferencePanel(wx.Panel):
     def __init__(self, parent, bmp):
@@ -60,6 +66,7 @@ class XMLTree(wx.TreeCtrl):
 class RenderPanel(wx.PyPanel):
     def __init__(self, parent, document=None):
         wx.PyPanel.__init__(self, parent)
+        self.lastRender = None
         self.document = document
         self.zoom = 100
         self.offset = wx.Point(0,0)
@@ -72,8 +79,10 @@ class RenderPanel(wx.PyPanel):
         self.Bind(wx.EVT_MIDDLE_UP, self.OnMiddleClick)
         
     def OnPaint(self, evt):
+        start = time.time()
         dc = wx.PaintDC(self)
         if not self.document:
+            dc.DrawText("No Document", 20, 20)
             return
         gc = wx.GraphicsContext_Create(dc)
         scale = float(self.zoom) / 100.0
@@ -82,6 +91,7 @@ class RenderPanel(wx.PyPanel):
         gc.Scale(scale, scale)
         
         self.document.render(gc)
+        self.lastRender = time.time() - start
         
     def GetBestSize(self):
         if not self.document:
@@ -97,11 +107,13 @@ class RenderPanel(wx.PyPanel):
         self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
         self.CaptureMouse()
         self.offsetFrom = evt.GetPosition()
+        evt.Skip()
     
     def OnLeftUp(self, evt):
         if self.HasCapture():
             self.ReleaseMouse()
         self.SetCursor(wx.NullCursor)
+        evt.Skip()
         
     def OnMotion(self, evt):
         if not self.HasCapture():
@@ -109,6 +121,7 @@ class RenderPanel(wx.PyPanel):
         self.offset += (evt.GetPosition() - self.offsetFrom)
         self.offsetFrom = evt.GetPosition()
         self.Refresh()
+        
     def OnMiddleClick(self, evt):
         self.offset = wx.Point(0,0)
         self.zoom = 100
@@ -119,6 +132,12 @@ class RenderPanel(wx.PyPanel):
         
     
 class ViewFrame(wx.Frame):
+    #status bar cell locations
+    SCROLL_OFFSET = 0
+    FILE = 1
+    LOAD_TIME = 2
+    RENDER_TIME = 3
+    
     def __init__(self, parent):
         wx.Frame.__init__(self, parent)
         self._mgr = wx.aui.AuiManager()
@@ -126,9 +145,8 @@ class ViewFrame(wx.Frame):
         
         self.wrap = wx.Panel(self)
         
-        self.document = document.SVGDocument(StringIO(document.document))
-        self.tree = XMLTree(self, self.document.tree)
-        self.render = RenderPanel(self.wrap, self.document)
+        self.tree = XMLTree(self, None)
+        self.render = RenderPanel(self.wrap)
         self.reference = ReferencePanel(self.wrap, None)
         sz = wx.BoxSizer(wx.HORIZONTAL)
         sz.Add(self.render, 1, wx.EXPAND|wx.RIGHT, 1)
@@ -154,16 +172,17 @@ class ViewFrame(wx.Frame):
             wx.aui.AuiPaneInfo().CentrePane().Caption("SVG Rendering"),
             "VIEWER"
         )        
-        
+        self.CreateStatusBar(5)
         self.Maximize()
         self._mgr.Update()
         
         self.Bind(wx.EVT_MENU, self.OnOpenFile, id=wx.ID_OPEN)
         self.Bind(wx.EVT_CHOICE, self.OnChooseFile)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelectionChange)
+        self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateUI)
         self.filePicker.SetSelection(self.filePicker.FindString('linking-a-05-t'))
         self.OnChooseFile(None)
-        self.CreateStatusBar()
+        
                 
     def makeMenus(self):
         fileMenu = wx.Menu()
@@ -201,9 +220,22 @@ class ViewFrame(wx.Frame):
         
     
     def openFile(self, filenameOrBuffer):
-        self.document = document.SVGDocument(filenameOrBuffer)
-        self.tree.updateTree(self.document.tree)
-        self.render.document = self.document
+        start = time.time()
+        tree = etree.parse(filenameOrBuffer)
+        try:
+            self.document = document.SVGDocument(tree.getroot())
+            self.render.document = self.document
+        except:
+            #pdb.set_trace()
+            import traceback
+            self.render.document = None
+            traceback.print_exc()
+            
+        amount = time.time() - start
+        self.tree.updateTree(tree)
+        self.SetStatusText("Loaded in %2f seconds" % amount, self.LOAD_TIME)
+        self.SetStatusText(filenameOrBuffer)
+        
         self.Refresh()
     
     def OnChooseFile(self, evt):
@@ -227,6 +259,9 @@ class ViewFrame(wx.Frame):
             return
         path = self.document.paths[element]
         print path
+    def OnUpdateUI(self, evt):
+        if self.render.lastRender is not None:
+            self.SetStatusText("Rendered in %2f seconds" % self.render.lastRender, self.RENDER_TIME)
         
 if __name__ == '__main__':
     app = wx.App(0)
