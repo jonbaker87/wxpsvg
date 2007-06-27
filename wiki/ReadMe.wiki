@@ -14,6 +14,8 @@
   * SVG DOM
   * the control should have some convenience methods to make hittesting convenient
   * Better performance (rendering is about as fast as it can be, need to optmize parsing)
+  * Need a mechanism for retrieving URLs.
+  * Loading needs to become async in some way, especially for the retrieval of urls.
 
 =Requirements=
   * Python 2.5 (2.4 may work, untested)
