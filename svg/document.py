@@ -1,4 +1,3 @@
-import pdb
 """
     SVGDocument
 """
@@ -78,7 +77,10 @@ def wxColourFromCSS(scolor):
         
 
 def pathHandler(func):
-    #decorator for methods which return a path operation
+    """decorator for methods which return a path operation
+        Creates the path they will fill,
+        and generates the path operations for the node
+    """
     def inner(self, node):
         path = wx.GraphicsRenderer_GetDefaultRenderer().CreatePath()
         func(self, node, path)

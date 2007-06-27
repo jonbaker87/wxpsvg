@@ -163,6 +163,7 @@ class ViewFrame(wx.Frame):
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelectionChange)
         self.filePicker.SetSelection(self.filePicker.FindString('linking-a-05-t'))
         self.OnChooseFile(None)
+        self.CreateStatusBar()
                 
     def makeMenus(self):
         fileMenu = wx.Menu()
