@@ -15,12 +15,14 @@ class TestBrushFromColourValue(unittest.TestCase):
         app = wx.App()
         self.document = document.SVGDocument(minimalSVG.getroot())
         self.stateStack = [{}]
+        
     def testNone(self):
         self.document.state["fill"] = 'none'
         self.assertEqual(
             self.document.getBrushFromState(),
             wx.NullBrush
         )
+        
     def testCurrentColour(self):
         self.document.state["fill"] = 'currentColor'
         self.document.state["color"] = "rgb(100,100,100)"
@@ -28,17 +30,35 @@ class TestBrushFromColourValue(unittest.TestCase):
             self.document.getBrushFromState().GetColour().Get(),
             (100,100,100)
         )
+        
     def testCurrentColourNull(self):
         self.document.state["fill"] = 'currentColor'
         self.assertEqual(
             self.document.getBrushFromState(),
             wx.NullBrush
         )
+        
     def testOpacity(self):
         self.document.state["fill"] = 'rgb(255,100,10)'
-        self.document.state["fill-opacity"] = 50
+        self.document.state["fill-opacity"] = 0.5
         self.assertEqual(
             self.document.getBrushFromState().GetColour().Alpha(),
-            100
+            127
+        )
+        
+    def testOpacityClampHigh(self):
+        self.document.state["fill"] = 'rgb(255,100,10)'
+        self.document.state["fill-opacity"] = 5
+        self.assertEqual(
+            self.document.getBrushFromState().GetColour().Alpha(),
+            255
+        )
+        
+    def testOpacityClampLow(self):
+        self.document.state["fill"] = 'rgb(255,100,10)'
+        self.document.state["fill-opacity"] = -100
+        self.assertEqual(
+            self.document.getBrushFromState().GetColour().Alpha(),
+            0
         )
         
