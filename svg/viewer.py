@@ -23,7 +23,7 @@ class ReferencePanel(wx.Panel):
         if self.bmp:
             dc.DrawBitmap(self.bmp, 0, 0)
         else:
-            dc.DrawText(30,30, "No image available")
+            dc.DrawText("No image available", 30, 30)
 
 
 
@@ -249,12 +249,15 @@ class ViewFrame(wx.Frame):
         png = os.path.join(self.getPNGDir(), 'full-'+fname+'.png')
         if os.path.isfile(png):
             self.reference.bmp = wx.Bitmap(png)
+        else:
+            self.reference.bmp = None
         
     def OnOpenFile(self, evt):
         dlg = wx.FileDialog(self)
         if dlg.ShowModal() == wx.ID_OK:
             self.openFile(dlg.GetPath())
-    
+            self.reference.bmp = None
+        
     def OnTreeSelectionChange(self, evt):
         item = self.tree.GetSelection()
         element = self.tree.GetItemPyData(item)

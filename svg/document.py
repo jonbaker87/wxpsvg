@@ -24,20 +24,6 @@ document = """<?xml version="1.0" standalone="no"?>
         fill="red" stroke="blue" stroke-width="3" />
 </svg>"""
 
-#~ document1 = """<?xml version="1.0" standalone="no"?>
-#~ <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
-  #~ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-#~ <svg width="4cm" height="4cm" viewBox="0 0 400 400"
-     #~ xmlns="http://www.w3.org/2000/svg" version="1.1">
-  #~ <title>Example triangle01- simple example of a 'path'</title>
-  #~ <desc>A path that draws a triangle</desc>
-  #~ <rect x="1" y="1" width="398" height="398"
-        #~ fill="none" stroke="blue" />
-  #~ <path class="SamplePath" d="M100,200 C 175,0,325,0,400,200
-                                       #~ " />
-#~ </svg>"""
-
-
 makePath = lambda: wx.GraphicsRenderer_GetDefaultRenderer().CreatePath()
 
 def attrAsFloat(node, attr):
@@ -46,51 +32,27 @@ def attrAsFloat(node, attr):
         except TypeError:
             return float(0)
 
-def wxColourFromCSS(scolor):
-    #note: CSS spec only has 17 named colors + system colors,
-    #but seems to permit adding arbitrary named colors
-    #TODO: need to return a false value for unknown colors
-    scolor = scolor.strip()
-    named = FindColour(scolor)
-    if named:
-        return named
-    if scolor.startswith("#"):
-        scolor = scolor[1:]
-        if len(scolor) == 6:
-            r = int(scolor[0:2], 16)
-            g = int(scolor[2:4], 16)
-            b = int(scolor[4:6], 16)
-            return wx.Colour(r,g,b)
-        elif len(scolor) == 3:
-            #3 character for is made by doubling each
-            #character, as per CSS 2.1 spec, section 4.3.6
-            #hence fab becomes ffaabb
-            r, g, b = map(lambda x: int(x*2, 16), scolor)
-            return wx.Colour(r,g,b)
-        else:
-            warnings.warn("invalid color value: %s" % scolor)
-    elif scolor.startswith("rgb"):
-        r, g, b = rgb.parseString(scolor)
-        return wx.Colour(r,g,b)
-    warnings.warn("No valid colour found? "+scolor)
-    return wx.NullColour
-        
-
 def pathHandler(func):
     """decorator for methods which return a path operation
         Creates the path they will fill,
         and generates the path operations for the node
     """
     def inner(self, node):
+        brush = self.getBrushFromState()
+        pen = self.getPenFromState()
+        if not (brush or pen):
+            return None, []
         path = wx.GraphicsRenderer_GetDefaultRenderer().CreatePath()
         func(self, node, path)
-        ops = self.generatePathOps(path)
+        ops = self.generatePathOps(path, brush=brush, pen=pen)
         return path, ops
     return inner
         
 
 class SVGDocument(object):
     lastControl = None
+    brushCache = {}
+    penCache = {}
     def __init__(self, element):
         """
         Create an SVG document from an ElementTree node.
@@ -204,7 +166,6 @@ class SVGDocument(object):
                     ops.append(
                         (wx.GraphicsContext.ConcatTransform, (matrix,))
                     )
-                    
         return ops
         
     
@@ -228,8 +189,6 @@ class SVGDocument(object):
             (wx.GraphicsContext.PopState, ())
         )
         return path, ops
-        
-            
         
     def getFontFromState(self):
         font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
@@ -257,7 +216,11 @@ class SVGDocument(object):
         text = node.text
         if text is None:
             return None, []
-        print type(node.text)
+            def testNone(self):
+        self.assertEqual(
+            self.parser.parseString("none").asList(),
+            ["NONE", ()]
+        )
         ops = [
             (wx.GraphicsContext.SetFont, (font,)),
             (wx.GraphicsContext.SetBrush, (brush,)),
@@ -352,13 +315,15 @@ class SVGDocument(object):
                     for arg in arguments:
                         yield (command, arg)
         for stroke in normalizeStrokes(pathdata.svg.parseString(data)):  
+        #for stroke in normalizeStrokes(pathdata.svg.parseString("M 100 100")):  
             self.addStrokeToPath(path, stroke)
         
-    def generatePathOps(self, path):
+    def generatePathOps(self, path, brush=None, pen=None):
         """ Look at the current state and generate the 
         draw operations (fill, stroke, neither) for the path"""
         ops = []
-        brush = self.getBrushFromState()
+        if brush is None:
+            brush = self.getBrushFromState()
         fillRule = self.state.get('fill-rule', 'nonzero')
         frMap = {'nonzero':wx.WINDING_RULE, 'evenodd': wx.ODDEVEN_RULE}
         fr = frMap.get(fillRule, wx.ODDEVEN_RULE)
@@ -369,8 +334,8 @@ class SVGDocument(object):
             ops.append(
                 (wx.GraphicsContext.FillPath, (path, fr))
             )
-            
-        pen = self.getPenFromState()
+        if pen is None:            
+            pen = self.getPenFromState()
         if pen:
             ops.append(
                     (wx.GraphicsContext.SetPen, (pen,))
@@ -412,14 +377,14 @@ class SVGDocument(object):
         pen.SetCap(capmap.get(self.state.get('stroke-linecap', None), wx.CAP_BUTT))
         pen.SetJoin(joinmap.get(self.state.get('stroke-linejoin', None), wx.JOIN_MITER))
         return wx.GraphicsRenderer_GetDefaultRenderer().CreatePen(pen)
-            
+
     def getBrushFromState(self):
         brushcolour = self.state.get('fill', 'none').strip()
         if brushcolour == 'currentColor':
             brushcolour = self.state.get('color', 'none')
         if brushcolour == 'transparent':
             return wx.TRANSPARENT_BRUSH
-        if brushcolour == 'none':
+        elif brushcolour == 'none':
             return wx.NullBrush
         type, value = colourValue.parseString(brushcolour)
         if type == 'URL':

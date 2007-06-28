@@ -5,7 +5,6 @@
         hex literal long: #fafafa
         rgb bytes: rgb(255,100,0)
         rgb percent: rgb(100%,100%,0%)
-        url to pserver: url(#someGradient)
         named color: black
 """
 import wx
@@ -63,40 +62,36 @@ hexLiteral = (Literal("#").setParseAction(lambda t: "RGB") +
 )
 
 def parseNamedColour(t):
-    return ["NAMED", NamedColours[t[0]]]
-    
-def parsePossibleURL(t):
-    return urlparse.urlsplit(t[0])    
+    try:
+        return ["NAMED", NamedColours[t[0].lower()]]
+    except KeyError:
+        return ["NAMED", (0,0,0)]
     
 namedColour = Word(alphas).setParseAction(parseNamedColour)
-possibleURL = Word(string.printable.replace(")", "")).setParseAction(parsePossibleURL)
 
-url = (
-    Literal("url(").setParseAction(lambda t: "URL") 
-    + possibleURL + 
-    Literal(")").suppress() + StringEnd()
-)
 
-colourValue = url | rgb | hexLiteral | namedColour
+colourValue = rgb | hexLiteral | namedColour
 
+
+##constants
 NamedColours = {
-    #html named colours
-    "black":(0,0,0),
-    "silver": (0xc0, 0xc0, 0xc0, 255),
-    "gray": (0x80, 0x80, 0x80),
-    "white":(255,255,255),
-    "maroon":(0x80, 0, 0),
-    "red":(0xff, 0, 0),
-    "purple":(0x80, 0, 0x80),
-    "fuchsia":(0xff, 0, 0xff),
-    "green": (0, 0x80, 0),
-    "lime": (0, 0xff, 0),
-    "olive": (0x80, 0x80, 00),
-    "yellow":(0xff, 0xff, 00),
-    "navy": (0, 0, 0x80),
-    "blue": (0, 0, 0xff),
-    "teal": (0, 0x80, 0x80),
-    "aqua": (0, 0xff, 0xff),
+    #~ #html named colours
+    #~ "black":(0,0,0),
+    #~ "silver": (0xc0, 0xc0, 0xc0, 255),
+    #~ "gray": (0x80, 0x80, 0x80),
+    #~ "white":(255,255,255),
+    #~ "maroon":(0x80, 0, 0),
+    #~ "red":(0xff, 0, 0),
+    #~ "purple":(0x80, 0, 0x80),
+    #~ "fuchsia":(0xff, 0, 0xff),
+    #~ "green": (0, 0x80, 0),
+    #~ "lime": (0, 0xff, 0),
+    #~ "olive": (0x80, 0x80, 00),
+    #~ "yellow":(0xff, 0xff, 00),
+    #~ "navy": (0, 0, 0x80),
+    #~ "blue": (0, 0, 0xff),
+    #~ "teal": (0, 0x80, 0x80),
+    #~ "aqua": (0, 0xff, 0xff),
     #expanded named colors from SVG spc
     'aliceblue' : (240, 248, 255) ,
     'antiquewhite' : (250, 235, 215) ,
@@ -247,9 +242,41 @@ NamedColours = {
     'yellowgreen' : (154, 205, 50) ,
 }
 
+
+
 def fillCSS2SystemColours():
     #The system colours require a wxApp to be present to retrieve,
     #so if you wnat support for them you'll need 
     #to call this function after your wxApp instance starts
-    pass
-    
+    systemColors = {
+        "ActiveBorder": wx.SYS_COLOUR_ACTIVEBORDER,
+        "ActiveCaption": wx.SYS_COLOUR_ACTIVECAPTION,
+        "AppWorkspace": wx.SYS_COLOUR_APPWORKSPACE,
+        "Background": wx.SYS_COLOUR_BACKGROUND,
+        "ButtonFace": wx.SYS_COLOUR_BTNFACE,
+        "ButtonHighlight": wx.SYS_COLOUR_BTNHIGHLIGHT,
+        "ButtonShadow": wx.SYS_COLOUR_BTNSHADOW,
+        "ButtonText": wx.SYS_COLOUR_BTNTEXT,
+        "CaptionText": wx.SYS_COLOUR_CAPTIONTEXT,
+        "GrayText": wx.SYS_COLOUR_GRAYTEXT,
+        "Highlight": wx.SYS_COLOUR_HIGHLIGHT,
+        "HighlightText": wx.SYS_COLOUR_HIGHLIGHTTEXT,
+        "InactiveBorder": wx.SYS_COLOUR_INACTIVEBORDER,
+        "InactiveCaption": wx.SYS_COLOUR_INACTIVECAPTION,
+        "InfoBackground": wx.SYS_COLOUR_INFOBK,
+        "InfoText": wx.SYS_COLOUR_INFOTEXT,
+        "Menu": wx.SYS_COLOUR_MENU,
+        "MenuText": wx.SYS_COLOUR_MENUTEXT,
+        "Scrollbar": wx.SYS_COLOUR_SCROLLBAR,
+        "ThreeDDarkShadow": wx.SYS_COLOUR_3DDKSHADOW,
+        "ThreeDFace": wx.SYS_COLOUR_3DFACE,
+        "ThreeDHighlight": wx.SYS_COLOUR_3DHIGHLIGHT,
+        "ThreeDLightShadow": wx.SYS_COLOUR_3DLIGHT,
+        "ThreeDShadow": wx.SYS_COLOUR_3DSHADOW,
+        "Window": wx.SYS_COLOUR_WINDOW,
+        "WindowFrame": wx.SYS_COLOUR_WINDOWFRAME,
+        "WindowText": wx.SYS_COLOUR_WINDOWTEXT
+    }
+    NamedColours.update(
+        (k.lower(), wx.SystemSettings.GetColour(v)) for (k,v) in systemColors.iteritems()
+    )
