@@ -63,9 +63,9 @@ hexLiteral = (Literal("#").setParseAction(lambda t: "RGB") +
 
 def parseNamedColour(t):
     try:
-        return ["NAMED", NamedColours[t[0].lower()]]
+        return ["RGB", NamedColours[t[0].lower()]]
     except KeyError:
-        return ["NAMED", (0,0,0)]
+        return ["RGB", (0,0,0)]
     
 namedColour = Word(alphas).setParseAction(parseNamedColour)
 

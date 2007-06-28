@@ -10,6 +10,7 @@ import math
 import pathdata
 import css
 from css.colour import colourValue
+from attributes import paintValue
 
 document = """<?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
@@ -216,11 +217,6 @@ class SVGDocument(object):
         text = node.text
         if text is None:
             return None, []
-            def testNone(self):
-        self.assertEqual(
-            self.parser.parseString("none").asList(),
-            ["NONE", ()]
-        )
         ops = [
             (wx.GraphicsContext.SetFont, (font,)),
             (wx.GraphicsContext.SetBrush, (brush,)),
@@ -379,26 +375,30 @@ class SVGDocument(object):
         return wx.GraphicsRenderer_GetDefaultRenderer().CreatePen(pen)
 
     def getBrushFromState(self):
-        brushcolour = self.state.get('fill', 'none').strip()
-        if brushcolour == 'currentColor':
-            brushcolour = self.state.get('color', 'none')
-        if brushcolour == 'transparent':
-            return wx.TRANSPARENT_BRUSH
-        elif brushcolour == 'none':
+        brushcolour = self.state.get('fill', 'black').strip()
+        type, details = paintValue.parseString(brushcolour)
+        if type == 'CURRENTCOLOR':
+            type, details = paintValue.parseString(self.state.get('color', 'none'))
+        if type == 'RGB':
+            r,g,b = details
+        elif type == "URL":
+            warnings.warn("paint server not supported")
+            r,g,b  = 0,0,0
+        elif type == "NONE":
             return wx.NullBrush
-        type, value = colourValue.parseString(brushcolour)
-        if type == 'URL':
-            warnings.warn("Color server not yet implemented")
-            return wx.NullBrush
-        else:
-            if value[:3] == (-1, -1, -1):
-                return wx.NullBrush
-            r, g, b = value
         opacity = self.state.get('fill-opacity', self.state.get('opacity', '1'))
         opacity = float(opacity)
         opacity = min(max(opacity, 0.0), 1.0)
         a = 255 * opacity
-        return wx.Brush(wx.Colour(r,g,b,a))
+        #using try/except block instead of 
+        #just setdefault because the wxBrush and wxColour would
+        #be created every time anyway in order to pass them,
+        #defeating the purpose of the cache
+        try:
+            return SVGDocument.brushCache[(r,g,b,a)]
+        except KeyError:
+            return SVGDocument.brushCache.setdefault((r,g,b,a), wx.Brush(wx.Colour(r,g,b,a)))
+        
         
         
     def addStrokeToPath(self, path, stroke):
