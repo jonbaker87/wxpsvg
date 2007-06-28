@@ -41,4 +41,4 @@ url = (
 #an empty tuple if the parser has an error
 #The fallback will be another (type, details) tuple as a parsed
 #colorDeclaration, but may be the empty tuple if it is not present
-paintValue = colorDeclaration | url
+paintValue = url | colorDeclaration

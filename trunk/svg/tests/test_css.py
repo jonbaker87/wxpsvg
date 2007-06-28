@@ -123,7 +123,7 @@ class TestNamedColours(unittest.TestCase):
     def testNamedColour(self):
         self.assertEqual(
             self.parser.parseString("fuchsia").asList(),
-            ["NAMED", (0xff, 0, 0xff)]
+            ["RGB", (0xff, 0, 0xff)]
         )
     def testNamedColourLookupCaseInsensitive(self):
         self.assertEqual(
@@ -138,7 +138,7 @@ class TestSystemColours(unittest.TestCase):
         colour.fillCSS2SystemColours()
         self.assertEqual(
             self.parser.parseString("ThreeDFace").asList(),
-            ["NAMED", wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE).Get()]
+            ["RGB", wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE).Get()]
         )
         
 class TestValueParser(TestNamedColours, TestHexParsing, TestRGBParsing):

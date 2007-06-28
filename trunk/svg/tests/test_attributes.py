@@ -14,18 +14,26 @@ class TestURLParser(unittest.TestCase):
     def testURLWithFallback(self):
         self.assertEqual(
             self.parser.parseString("url(someGradient) red").asList(),
-            ["URL", [('', '', "someGradient", '', ''), ['NAMED', (255,0,0)]]]
+            ["URL", [('', '', "someGradient", '', ''), ['RGB', (255,0,0)]]]
+        )
+    def testEmptyURLWithFallback(self):
+        self.assertEqual(
+            self.parser.parseString("url() red").asList(),
+            ["URL", [('', '', '', '', ''), ['RGB', (255,0,0)]]]
         )
     def testEmptyURL(self):
         self.assertEqual(
-            self.parser.parseString("url() red").asList(),
-            ["URL", [('', '', '', '', ''), ['NAMED', (255,0,0)]]]
+            self.parser.parseString("url()").asList(),
+            ["URL", [('', '', '', '', ''), ()]]
         )
     def testxPointerURL(self):
         self.assertEqual(
             self.parser.parseString("url(#xpointer(idsomeGradient))").asList(),
             ["URL", [('', '', '', '', "xpointer(idsomeGradient)"), ()]]
         )
+        
+class TestPaintValueURL(TestURLParser):
+    parser = a.paintValue
         
 class TestPaintValue(TestValueParser):
     parser = a.paintValue
