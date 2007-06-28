@@ -22,6 +22,8 @@ class ReferencePanel(wx.Panel):
         dc = wx.PaintDC(self)
         if self.bmp:
             dc.DrawBitmap(self.bmp, 0, 0)
+        else:
+            dc.DrawText(30,30, "No image available")
 
 
 
@@ -245,7 +247,8 @@ class ViewFrame(wx.Frame):
         svg = os.path.join(self.getSVGDir(), fname+'.svg')
         self.openFile(svg)
         png = os.path.join(self.getPNGDir(), 'full-'+fname+'.png')
-        self.reference.bmp = wx.Bitmap(png)
+        if os.path.isfile(png):
+            self.reference.bmp = wx.Bitmap(png)
         
     def OnOpenFile(self, evt):
         dlg = wx.FileDialog(self)
