@@ -19,24 +19,11 @@ class TestParserPart(object):
                 lambda: self.parser.parseString(num)
             )
             
-class TestFractionalConstant(unittest.TestCase, TestParserPart):
-    parser = fractionalConstant
-    valid = ['1.', '1.0', '0.1']
-    invalid = ['.', '1', 'f']
-
-class TestFPConstant(TestFractionalConstant):
-    parser = floatingPointConstant
-    valid = ['1.e10', '1e2', '1e+4', '1e-10']
-    invalid = ['e10']
 
 class TestNumber(unittest.TestCase, TestParserPart):
-    parser = number
-    valid = TestFPConstant.valid + TestFractionalConstant.valid + ['-10', '+10', '-1e10', '-1453.7e-6']
-    invalid = ['', 'f']
-    def testToFloat(self):
-        for num in self.valid:
-            parsed = self.parser.parseString(str(num))[0]
-            self.assert_(float(parsed))
+    parser = floatingPointConstant
+    valid = ['1.e10', '1e2', '1e+4', '1e-10','1.', '1.0', '0.1']
+    invalid = ['e10', '.', 'f', '']
 
 class TestCoords(unittest.TestCase):
     def testCoordPair(self):
@@ -81,6 +68,11 @@ class TestEllipticalArc(unittest.TestCase):
             ellipticalArc.parseString("a25,25 -30 0,1 50,-25").asList()[0],
             ["a", [[(25.0, 25.0), -30.0, (False,True), (50.0, -25.0)]]]
         )
+    def testExtraArgs(self):
+        self.assertEqual(
+            ellipticalArc.parseString("a25,25 -30 0,1 50,-25, 10, 10").asList()[0],
+            ["a", [[(25.0, 25.0), -30.0, (False,True), (50.0, -25.0)]]]
+        )
 class TestSmoothQuadraticBezierCurveto(unittest.TestCase):
     def testParse(self):
         self.assertEqual(
@@ -116,7 +108,29 @@ class TestClosePath(unittest.TestCase):
 
 class TestSVG(unittest.TestCase):
     def testParse(self):
-        path = 'M 100 100 L 300 100 L 200 300 z a 100,100 -4 0,1 25 25 z T300 1000 t40, 50 h4 42 2 2,1 v1,1,1 Z Q 34,10 1 1'
-        r = svg.parseString(path)
+        path = 'M 100 100 L 300 100 L 200 300 z a 100,100 -4 0,1 25 25 z T300 1000 t40, 50 h4 42 2 2,1v1,1,1 Z Q 34,10 1 1'
+        r = svg.parseString(path).asList()
+        expected = [
+                ["M", [(100,100)]],
+                ["L", [(300, 100)]],
+                ["L", [(200, 300)]],
+                ("Z", (None,)),
+                ["a", [[(100,100),-4, (False, True), (25, 25)]]],
+                ("Z", (None,)),
+                ["T", [(300,1000)]],
+                ["t", [(40, 50)]],
+                ["h", [4,42, 2, 2, 1]],
+                ["v", [1, 1, 1]],
+                ("Z", (None,)),
+                ["Q", [[(34, 10), (1, 1)]]]
+           ]
+        self.assertEqual(
+            len(r),
+            len(expected)
+        )
+        for a, b in zip(expected, r):
+            self.assertEqual(
+                a, b
+            )
         
         

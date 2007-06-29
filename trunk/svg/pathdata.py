@@ -10,7 +10,7 @@
 """
 
 from pyparsing import (ParserElement, Literal, Word, CaselessLiteral, 
-    Optional, Combine, Forward, ZeroOrMore, nums, oneOf, Group, ParseException)
+    Optional, Combine, Forward, ZeroOrMore, nums, oneOf, Group, ParseException, OneOrMore)
     
 ParserElement.enablePackrat()
 
@@ -44,28 +44,11 @@ class CaselessPreservingLiteral(CaselessLiteral):
     
 def Sequence(token):
     """ A sequence of the token"""
-    seq = Forward()
-    seq << ((token + comma + seq) ^ token)
-    return seq
+    return OneOrMore(token+comma)
 
 digit_sequence = Word(nums)
 
 sign = oneOf("+ -")
-
-exponent = CaselessLiteral("e") + Optional(sign) + digit_sequence
-
-fractionalConstant = Combine(
-    (Optional(digit_sequence) + Literal(".") + digit_sequence) 
-    ^
-    digit_sequence + Literal(".")
-).setParseAction(lambda t:float(t[0]))
-
-
-floatingPointConstant = Combine(
-    fractionalConstant + Optional(exponent)
-    ^
-    digit_sequence + exponent
-).setParseAction(lambda t:float(t[0]))
 
 def convertToFloat(s, loc, toks):
     try:
@@ -80,6 +63,7 @@ floatingPointConstant = Word(nums+"+-.eE").setParseAction(convertToFloat)
 
 number = floatingPointConstant
 
+#same as FP constant but don't allow a - sign
 nonnegativeNumber = (
     Word(nums+"+.eE").setParseAction(convertToFloat)
 )
@@ -126,7 +110,6 @@ ellipticalArcArgument = Group(
 ellipticalArc = Group(Command("A") + Arguments(Sequence(ellipticalArcArgument)))
 
 smoothQuadraticBezierCurveto = Group(Command("T") + Arguments(coordinatePairSequence))
-
 
 quadraticBezierCurveto = Group(Command("Q") + Arguments(coordinatePairPairSequence))
 
