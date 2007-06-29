@@ -12,7 +12,7 @@
 from pyparsing import (ParserElement, Literal, Word, CaselessLiteral, 
     Optional, Combine, Forward, ZeroOrMore, nums, oneOf, Group, ParseException, OneOrMore)
     
-ParserElement.enablePackrat()
+#ParserElement.enablePackrat()
 
 def Command(char):
     """ Case insensitive but case preserving"""
