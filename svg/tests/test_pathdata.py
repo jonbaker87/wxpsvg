@@ -4,6 +4,8 @@ from pyparsing import ParseException
 from svg.pathdata import *
 
 class TestParserPart(object):
+    valid= []
+    invalid = []
     def testValid(self):
         for num in self.valid:
             self.assertEqual(
