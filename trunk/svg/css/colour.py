@@ -10,11 +10,11 @@
 import wx
 import string
 import urlparse
-from pyparsing import Literal, Optional, oneOf, Group, StringEnd, Combine, Word, alphas, hexnums
-from ..pathdata import integerConstant, number, sign
+from pyparsing import nums, Literal, Optional, oneOf, Group, StringEnd, Combine, Word, alphas, hexnums
+from ..pathdata import number, sign
 
 number = number.copy()
-integerConstant = integerConstant.copy()
+integerConstant = Word(nums+"+-").setParseAction(lambda t:int(t[0]))
 
 #rgb format parser
 comma = Literal(",").suppress()

@@ -139,9 +139,8 @@ class ViewFrame(wx.Frame):
     FILE = 1
     LOAD_TIME = 2
     RENDER_TIME = 3
-    
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent)
+        wx.Frame.__init__(self, parent, style=wx.DEFAULT_FRAME_STYLE | wx.CLIP_CHILDREN)
         self._mgr = wx.aui.AuiManager()
         self._mgr.SetManagedWindow(self)
         

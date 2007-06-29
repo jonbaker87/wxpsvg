@@ -9,8 +9,8 @@ from pyparsing import (Literal, Word, CaselessLiteral,
 
 from ..pathdata import (digit_sequence, sign, exponent, 
     fractionalConstant, floatingPointConstant,
-    integerConstant, number, comma)
-    
+    number, comma)
+
 paren = Literal("(").suppress()
 cparen = Literal(")").suppress()
 
