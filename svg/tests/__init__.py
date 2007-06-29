@@ -1,3 +1,8 @@
+#for the benefit of people not using nose or trial 
+#or any other sort of test discovery mechanism.
+#there's probably a better way to do this
+
+
 from __future__ import absolute_import
 
 from svg.tests.test_pathdata import *

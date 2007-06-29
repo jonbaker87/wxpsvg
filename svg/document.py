@@ -6,6 +6,7 @@ import wx
 from cStringIO import StringIO
 import warnings
 import math
+from functools import wraps
 
 import pathdata
 import css
@@ -38,14 +39,15 @@ def pathHandler(func):
         Creates the path they will fill,
         and generates the path operations for the node
     """
+    @wraps(func)
     def inner(self, node):
-        brush = self.getBrushFromState()
-        pen = self.getPenFromState()
-        if not (brush or pen):
-            return None, []
+        #brush = self.getBrushFromState()
+        #pen = self.getPenFromState()
+        #if not (brush or pen):
+        #    return None, []
         path = wx.GraphicsRenderer_GetDefaultRenderer().CreatePath()
         func(self, node, path)
-        ops = self.generatePathOps(path, brush=brush, pen=pen)
+        ops = self.generatePathOps(path)
         return path, ops
     return inner
         
@@ -319,7 +321,7 @@ class SVGDocument(object):
         draw operations (fill, stroke, neither) for the path"""
         ops = []
         if brush is None:
-            brush = self.getBrushFromState()
+            brush = self.getBrushFromState(path)
         fillRule = self.state.get('fill-rule', 'nonzero')
         frMap = {'nonzero':wx.WINDING_RULE, 'evenodd': wx.ODDEVEN_RULE}
         fr = frMap.get(fillRule, wx.ODDEVEN_RULE)
@@ -374,16 +376,47 @@ class SVGDocument(object):
         pen.SetJoin(joinmap.get(self.state.get('stroke-linejoin', None), wx.JOIN_MITER))
         return wx.GraphicsRenderer_GetDefaultRenderer().CreatePen(pen)
 
-    def getBrushFromState(self):
+    def getBrushFromState(self, path=None):
+        if not path:
+            return wx.NullBrush
         brushcolour = self.state.get('fill', 'black').strip()
         type, details = paintValue.parseString(brushcolour)
+        if type == "URL":
+            url, fallback = details
+            element = self.resolveURL(url)
+            if not element:
+                if fallback:
+                    type, details = fallback
+                else:
+                    r, g, b, = 0, 0, 0
+            else:
+                if element.tag == '{http://www.w3.org/2000/svg}linearGradient':
+                    box = path.GetBox()
+                    x, y, w, h = box.Get()
+                    return wx.GraphicsRenderer.GetDefaultRenderer().CreateLinearGradientBrush(
+                        x,y,x+w,y+h,wx.Colour(0,0,255,128), wx.RED
+                    )
+                elif element.tag == '{http://www.w3.org/2000/svg}radialGradient':
+                    box = path.GetBox()
+                    x, y, w, h = box.Get()
+                    print w
+                    mx = wx.GraphicsRenderer.GetDefaultRenderer().CreateMatrix(x,y,w,h)
+                    cx, cy = mx.TransformPoint(0.5, 0.5)
+                    fx, fy = cx, cy
+                    return wx.GraphicsRenderer.GetDefaultRenderer().CreateRadialGradientBrush(
+                        cx,cy,
+                        fx,fy,
+                        (max(w,h))/2,
+                        wx.Colour(0,0,255,128), wx.RED
+                    )
+                else:
+                    #invlid gradient specified
+                    return wx.NullBrush
+            r,g,b  = 0,0,0
         if type == 'CURRENTCOLOR':
             type, details = paintValue.parseString(self.state.get('color', 'none'))
         if type == 'RGB':
             r,g,b = details
-        elif type == "URL":
-            warnings.warn("paint server not supported")
-            r,g,b  = 0,0,0
         elif type == "NONE":
             return wx.NullBrush
         opacity = self.state.get('fill-opacity', self.state.get('opacity', '1'))
@@ -399,6 +432,27 @@ class SVGDocument(object):
         except KeyError:
             return SVGDocument.brushCache.setdefault((r,g,b,a), wx.Brush(wx.Colour(r,g,b,a)))
         
+        
+    def resolveURL(self, urlData):
+        """
+            Resolve a URL and return an elementTree Element from it.
+            
+            Return None if unresolvable
+            
+        """
+        scheme, netloc, path, query, fragment = urlData
+        if scheme == netloc == path == '':
+            #horrible. There's got to be a better way?
+            if self.tree.get("id") == fragment:
+                return self.tree
+            else:
+                for child in self.tree.getiterator():
+                    print child.get("id")
+                    if child.get("id") == fragment:
+                        return child
+            return None
+        else:
+            return self.resolveRemoteURL(self, urlData)
         
         
     def addStrokeToPath(self, path, stroke):
