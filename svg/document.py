@@ -9,7 +9,7 @@ import math
 
 import pathdata
 import css
-from css.colour import colourValue
+from svg.css.colour import colourValue
 from attributes import paintValue
 
 document = """<?xml version="1.0" standalone="no"?>
@@ -194,7 +194,7 @@ class SVGDocument(object):
     def getFontFromState(self):
         font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
         family = self.state.get("font-family")
-        if family:
+        if False:#family:
             font.SetFaceName(family)
         size = self.state.get("font-size")
         #I'm not sure if this is right or not
