@@ -10,7 +10,7 @@
 """
 
 from pyparsing import (ParserElement, Literal, Word, CaselessLiteral, 
-    Optional, Combine, Forward, ZeroOrMore, nums, oneOf, Group)
+    Optional, Combine, Forward, ZeroOrMore, nums, oneOf, Group, ParseException)
     
 ParserElement.enablePackrat()
 
@@ -67,16 +67,22 @@ floatingPointConstant = Combine(
     digit_sequence + exponent
 ).setParseAction(lambda t:float(t[0]))
 
+def convertToFloat(s, loc, toks):
+    try:
+        return float(toks[0])
+    except:
+        raise ParseException(loc, "invalid float format %s"%toks[0])
 
-integerConstant = digit_sequence.setParseAction(lambda t:int(t[0]))
+#don't try to validate exact format of the float, let the python float()
+#call do that. Since floatingPointConstants are most of the pathdata,
+#this gives roughly 100% speedup over more closely matching in the parser
+floatingPointConstant = Word(nums+"+-.eE").setParseAction(convertToFloat)
 
-number = Combine(
-    (Optional(sign) + integerConstant) 
-    ^
-    (Optional(sign) + floatingPointConstant)
-).setParseAction(lambda t:float(t[0]))
+number = floatingPointConstant
 
-nonnegativeNumber = (floatingPointConstant ^ integerConstant).setParseAction(lambda t:float(t[0]))
+nonnegativeNumber = (
+    Word(nums+"+.eE").setParseAction(convertToFloat)
+)
 
 coordinate = number
 
@@ -132,8 +138,8 @@ horizontalLine = Group(Command("H") + Arguments(coordinateSequence))
 verticalLine = Group(Command("V") + Arguments(coordinateSequence))
 
 drawToCommand = (
-    lineTo ^ moveTo ^ closePath ^ ellipticalArc ^ smoothQuadraticBezierCurveto ^
-    quadraticBezierCurveto ^ smoothCurve ^ curve ^ horizontalLine ^ verticalLine
+    lineTo | moveTo | closePath | ellipticalArc | smoothQuadraticBezierCurveto |
+    quadraticBezierCurveto | smoothCurve | curve | horizontalLine | verticalLine
     )
 
 moveToDrawToCommands = moveTo + ZeroOrMore(drawToCommand)
@@ -149,9 +155,8 @@ def profile():
     ptest()
     p.disable()
     p.print_stats()
-    
-def ptest():
-    bpath = """M204.33 139.83 C196.33 133.33 206.68 132.82 206.58 132.58 C192.33 97.08 169.35 
+
+bpath = """M204.33 139.83 C196.33 133.33 206.68 132.82 206.58 132.58 C192.33 97.08 169.35 
     81.41 167.58 80.58 C162.12 78.02 159.48 78.26 160.45 76.97 C161.41 75.68 167.72 79.72 168.58 
     80.33 C193.83 98.33 207.58 132.33 207.58 132.33 C207.58 132.33 209.33 133.33 209.58 132.58 
     C219.58 103.08 239.58 87.58 246.33 81.33 C253.08 75.08 256.63 74.47 247.33 81.58 C218.58 103.58 
@@ -172,7 +177,13 @@ def ptest():
     C78.28 170.17 53.39 170.83 53.9 140.83 C53.92 139.25 55.61 142.67 53.9 140.83 C47.82 134.33 45.32 122.53 44.27 121.33 C38.19 114.33 
     39.71 105.83 39.71 105.83 C39.71 105.83 22.08 85.79 19.46 80.83 C-31.19 -14.67 114.07 63.59 118.22 66.33 C185.58 110.83 202 145.83 
     202 145.83 C202 145.83 202.36 143.28 203 141.83 C203.64 140.39 204.56 140.02 204.33 139.83 z"""
+
+def ptest():
     svg.parseString(bpath)
+    
+
+
+    
     
 if __name__ == '__main__':
     
