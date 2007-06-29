@@ -11,4 +11,4 @@ from svg.tests.test_css import *
 from svg.tests.test_attributes import *
 
 if __name__ == '__main__':
-    unittest.main()    
+    unittest.main(module="svg.tests")    
