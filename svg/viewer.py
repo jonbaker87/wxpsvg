@@ -128,11 +128,7 @@ class RenderPanel(wx.PyPanel):
         self.offset = wx.Point(0,0)
         self.zoom = 100
         self.Refresh()
-            
-        
-    
-        
-    
+     
 class ViewFrame(wx.Frame):
     #status bar cell locations
     SCROLL_OFFSET = 0
