@@ -35,6 +35,21 @@ class TestCoords(unittest.TestCase):
             coordinatePair.parseString('100,2E7')[0],
             (100,2e7)
         )
+    def testCoordPairWithMinus(self):
+        self.assertEqual(
+            coordinatePair.parseString('100-100')[0],
+            (100.0, -100.0)
+        )
+    def testCoordPairWithPlus(self):
+        self.assertEqual(
+            coordinatePair.parseString('100+100')[0],
+            (100.0, 100.0)
+        )
+    def testCoordPairWithPlusAndExponent(self):
+        self.assertEqual(
+            coordinatePair.parseString('100+1e+2')[0],
+            (100.0, 100.0)
+        )
 
 class TestMoveTo(unittest.TestCase):
     def testSimple(self):
