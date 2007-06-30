@@ -316,12 +316,11 @@ class SVGDocument(object):
         #for stroke in normalizeStrokes(pathdata.svg.parseString("M 100 100")):  
             self.addStrokeToPath(path, stroke)
         
-    def generatePathOps(self, path, brush=None, pen=None):
+    def generatePathOps(self, path):
         """ Look at the current state and generate the 
         draw operations (fill, stroke, neither) for the path"""
         ops = []
-        if brush is None:
-            brush = self.getBrushFromState(path)
+        brush = self.getBrushFromState(path)
         fillRule = self.state.get('fill-rule', 'nonzero')
         frMap = {'nonzero':wx.WINDING_RULE, 'evenodd': wx.ODDEVEN_RULE}
         fr = frMap.get(fillRule, wx.ODDEVEN_RULE)
@@ -332,8 +331,7 @@ class SVGDocument(object):
             ops.append(
                 (wx.GraphicsContext.FillPath, (path, fr))
             )
-        if pen is None:            
-            pen = self.getPenFromState()
+        pen = self.getPenFromState()
         if pen:
             ops.append(
                     (wx.GraphicsContext.SetPen, (pen,))
@@ -377,8 +375,6 @@ class SVGDocument(object):
         return wx.GraphicsRenderer_GetDefaultRenderer().CreatePen(pen)
 
     def getBrushFromState(self, path=None):
-        if not path:
-            return wx.NullBrush
         brushcolour = self.state.get('fill', 'black').strip()
         type, details = paintValue.parseString(brushcolour)
         if type == "URL":
@@ -482,10 +478,6 @@ class SVGDocument(object):
             pt = normalizePoint(arg)
             self.firstPoints.append(pt)
             path.MoveToPoint(pt)
-            #~ if relative:
-                #~ self.addStrokeToPath(path, ("l", args[1:]))
-            #~ else:
-                #~ self.addStrokeToPath(path, ("L", args[1:]))
         elif type == 'L':
             path.AddLineToPoint(normalizePoint(arg))
         elif type == 'C':

@@ -59,7 +59,19 @@ def convertToFloat(s, loc, toks):
 #don't try to validate exact format of the float, let the python float()
 #call do that. Since floatingPointConstants are most of the pathdata,
 #this gives roughly 100% speedup over more closely matching in the parser
-floatingPointConstant = Word(nums+"+-.eE").setParseAction(convertToFloat)
+neg = Optional(sign)
+floatingPointConstant = Combine(neg + Word(nums+"+.eE")).setParseAction(convertToFloat)
+
+exponent = CaselessLiteral("e")+Optional(sign)+Word(nums)
+
+floatingPointConstant = Combine(
+    Optional(sign) + 
+    Word(nums) + 
+    Optional(Literal(".") + Optional(Word(nums)))+
+    Optional(exponent)
+)
+
+floatingPointConstant.setParseAction(convertToFloat)
 
 number = floatingPointConstant
 
