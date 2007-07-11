@@ -448,8 +448,10 @@ class SVGDocument(object):
                         return child
             return None
         else:
-            return self.resolveRemoteURL(self, urlData)
+            return self.resolveRemoteURL(urlData)
         
+    def resolveRemoteURL(self, url):
+        return None
         
     def addStrokeToPath(self, path, stroke):
         """ Given a stroke from a path command
