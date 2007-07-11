@@ -9,10 +9,15 @@ minimalSVG = etree.parse(StringIO(r"""<?xml version="1.0" standalone="no"?>
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>"""))
 
+app = None
+
 class TestBrushFromColourValue(unittest.TestCase):
+    
     def setUp(self):
         #need a wxApp for this
-        app = wx.App()
+        global app
+        if not app:
+            app = wx.App(False)
         self.document = document.SVGDocument(minimalSVG.getroot())
         self.stateStack = [{}]
 
@@ -60,4 +65,10 @@ class TestBrushFromColourValue(unittest.TestCase):
         self.assertEqual(
             self.document.getBrushFromState().GetColour().Alpha(),
             0
+        )
+    def testURLFallback(self):
+        self.document.state["fill"] = "url(http://google.com) red"
+        self.assertEqual(
+            self.document.getBrushFromState().GetColour().Get(),
+            (255,0,0)
         )
