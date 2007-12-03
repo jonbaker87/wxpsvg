@@ -177,7 +177,7 @@ class ViewFrame(wx.Frame):
         self.Bind(wx.EVT_CHOICE, self.OnChooseFile)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelectionChange)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateUI)
-        self.filePicker.SetSelection(self.filePicker.FindString('pservers-grad-01-b'))
+        self.filePicker.SetSelection(self.filePicker.FindString('painting-marker-02-f'))
         self.OnChooseFile(None)
         
                 

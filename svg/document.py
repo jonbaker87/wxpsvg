@@ -547,8 +547,8 @@ class SVGDocument(object):
             (rx, ry), #radii of ellipse
             angle, #angle of rotation on the ellipse in degrees
             (fa, fs), #arc and stroke angle flags
-            (x, y)
-            ) = arg #endpoint on the arc
+            (x, y) #endpoint on the arc
+            ) = arg 
             
             x, y = normalizePoint((x,y))
             cx, cy = path.GetCurrentPoint()
@@ -612,7 +612,7 @@ class SVGDocument(object):
             else:
                 warnings.warn("elliptical arcs not supported")
             path.AddPath(npath)
-            #npath.MoveToPoint(x,y)
+            npath.MoveToPoint(x,y)
             
         elif type == 'Z':
             #~ Bugginess:
