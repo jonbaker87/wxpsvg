@@ -44,7 +44,7 @@ class CaselessPreservingLiteral(CaselessLiteral):
     
 def Sequence(token):
     """ A sequence of the token"""
-    return OneOrMore(token+comma)
+    return OneOrMore(token+maybeComma)
 
 digit_sequence = Word(nums)
 
@@ -56,14 +56,12 @@ def convertToFloat(s, loc, toks):
     except:
         raise ParseException(loc, "invalid float format %s"%toks[0])
 
-#don't try to validate exact format of the float, let the python float()
-#call do that. Since floatingPointConstants are most of the pathdata,
-#this gives roughly 100% speedup over more closely matching in the parser
-neg = Optional(sign)
-floatingPointConstant = Combine(neg + Word(nums+"+.eE")).setParseAction(convertToFloat)
-
 exponent = CaselessLiteral("e")+Optional(sign)+Word(nums)
 
+#note that almost all these fields are optional, 
+#and this can match almost anything. We rely on Pythons built-in
+#float() function to clear out invalid values - loosely matching like this
+#speeds up parsing quite a lot
 floatingPointConstant = Combine(
     Optional(sign) + 
     Optional(Word(nums)) + 
@@ -76,23 +74,27 @@ floatingPointConstant.setParseAction(convertToFloat)
 number = floatingPointConstant
 
 #same as FP constant but don't allow a - sign
-nonnegativeNumber = (
-    Word(nums+"+.eE").setParseAction(convertToFloat)
+nonnegativeNumber = Combine(
+    Optional(Word(nums)) + 
+    Optional(Literal(".") + Optional(Word(nums)))+
+    Optional(exponent)
 )
+nonnegativeNumber.setParseAction(convertToFloat)
 
 coordinate = number
 
-comma = Optional(Literal(',')).suppress()
+#comma or whitespace can seperate values all over the place in SVG
+maybeComma = Optional(Literal(',')).suppress()
 
 coordinateSequence = Sequence(coordinate)
 
-coordinatePair = (coordinate + comma + coordinate).setParseAction(lambda t: tuple(t))
+coordinatePair = (coordinate + maybeComma + coordinate).setParseAction(lambda t: tuple(t))
 coordinatePairSequence = Sequence(coordinatePair)
 
-coordinatePairPair = coordinatePair + comma + coordinatePair
+coordinatePairPair = coordinatePair + maybeComma + coordinatePair
 coordinatePairPairSequence = Sequence(Group(coordinatePairPair))
 
-coordinatePairTriple = coordinatePair + comma + coordinatePair + comma + coordinatePair
+coordinatePairTriple = coordinatePair + maybeComma + coordinatePair + maybeComma + coordinatePair
 coordinatePairTripleSequence = Sequence(Group(coordinatePairTriple))
 
 #commands
@@ -105,15 +107,15 @@ closePath = Group(Command("Z")).setParseAction(lambda t: ('Z', (None,)))
 flag = oneOf("1 0").setParseAction(lambda t: bool(int((t[0]))))
 
 arcRadius = (
-    nonnegativeNumber + comma + #rx
+    nonnegativeNumber + maybeComma + #rx
     nonnegativeNumber #ry
 ).setParseAction(lambda t: tuple(t))
 
-arcFlags = (flag + comma + flag).setParseAction(lambda t: tuple(t))
+arcFlags = (flag + maybeComma + flag).setParseAction(lambda t: tuple(t))
 
 ellipticalArcArgument = Group(
-    arcRadius + comma + #rx, ry
-    number + comma +#rotation
+    arcRadius + maybeComma + #rx, ry
+    number + maybeComma +#rotation
     arcFlags + #large-arc-flag, sweep-flag
     coordinatePair #(x,y)
 )
