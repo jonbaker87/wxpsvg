@@ -66,7 +66,7 @@ exponent = CaselessLiteral("e")+Optional(sign)+Word(nums)
 
 floatingPointConstant = Combine(
     Optional(sign) + 
-    Word(nums) + 
+    Optional(Word(nums)) + 
     Optional(Literal(".") + Optional(Word(nums)))+
     Optional(exponent)
 )

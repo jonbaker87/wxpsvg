@@ -11,6 +11,7 @@ transformTestsGood = [
     (skewX, "skewX(10)",            ["skewX", [10]]),
     (rotate, "rotate(90)",          ["rotate", [90]]),
     (rotate, "rotate(90, 10 10)",   ["rotate", [90,10,10]]),
+    (scale, 'scale(.2, .2)',        ["scale", [0.2, 0.2]])
 ]
 
 #parse, string - exception is always ParseException
@@ -102,22 +103,16 @@ class TestHexParsing(unittest.TestCase):
             ["RGB", [0xf0, 0xa1, 0xb2]]
         )
     def testHexLiteralBroken(self):
-        self.assertRaises(
+        badstrings = [
+            "#fab0","#fab0102d", "#gab"
+        ]
+        for string in badstrings:
+            self.assertRaises(
             ParseException,
             self.parser.parseString,
-            "#fab0"
+            string
         )
-        self.assertRaises(
-            ParseException,
-            self.parser.parseString,
-            "#fab0102d"
-        )
-        self.assertRaises(
-            ParseException,
-            self.parser.parseString,
-            "#gab"
-        )
-
+        
 class TestNamedColours(unittest.TestCase):
     parser = colour.namedColour
     def testNamedColour(self):
