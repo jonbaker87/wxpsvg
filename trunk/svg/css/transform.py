@@ -7,7 +7,7 @@ from pyparsing import (Literal, Word, CaselessLiteral,
     
 #some shared definitions from pathdata
 
-from ..pathdata import number, comma
+from ..pathdata import number, maybeComma
 
 paren = Literal("(").suppress()
 cparen = Literal(")").suppress()
@@ -20,25 +20,25 @@ skewY = Literal("skewY") + Parenthised(number)
 skewX = Literal("skewX") + Parenthised(number)
 
 rotate = Literal("rotate") + Parenthised(
-    number + Optional(comma + number + comma + number)
+    number + Optional(maybeComma + number + maybeComma + number)
 )
 
 
 scale = Literal("scale") + Parenthised(
-    number + Optional(comma + number)
+    number + Optional(maybeComma + number)
 )
 
 translate = Literal("translate") + Parenthised(
-    number + Optional(comma + number)
+    number + Optional(maybeComma + number)
 )
 
 matrix = Literal("matrix") + Parenthised(
-    number + comma + number + comma + number + comma + number
+    number + maybeComma + number + maybeComma + number + maybeComma + number
 )
 
 transform = (skewY | skewX | rotate | scale | translate | matrix)
 
-transformList = delimitedList(Group(transform), delim=comma)
+transformList = delimitedList(Group(transform), delim=maybeComma)
 
 if __name__ == '__main__':
     from tests.test_css import *

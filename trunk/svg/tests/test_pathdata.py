@@ -22,8 +22,9 @@ class TestParserPart(object):
 
 class TestNumber(unittest.TestCase, TestParserPart):
     parser = floatingPointConstant
-    valid = ['1.e10', '1e2', '1e+4', '1e-10','1.', '1.0', '0.1']
+    valid = ['1.e10', '1e2', '1e+4', '1e-10','1.', '1.0', '0.1', '.2']
     invalid = ['e10', '.', 'f', '']
+    
 
 class TestCoords(unittest.TestCase):
     def testCoordPair(self):
