@@ -201,27 +201,26 @@ class SVGDocument(object):
         size = self.state.get("font-size")
         #I'm not sure if this is right or not
         if size:
-            font.SetPixelSize(wx.Size(int(size), int(size)))
+            font.SetPointSize(int(size))
         return font
     
     def addTextToDocument(self, node):
         x, y = [attrAsFloat(node, attr) for attr in ('x', 'y')]
         
-        def DoDrawText(context, text, x, y):
+        def DoDrawText(context, text, x, y, brush=wx.NullGraphicsBrush):
             #SVG spec appears to originate text from the bottom
             #rather than the top as with our API. This function
             #will measure and then re-orient the text as needed.
             w, h = context.GetTextExtent(text)
             y -= h
-            context.DrawText(text, x, y)
+            context.DrawText(text, x, y, brush)
         font = self.getFontFromState()
         brush = self.getBrushFromState()
         text = node.text
         if text is None:
             return None, []
         ops = [
-            (wx.GraphicsContext.SetFont, (font,)),
-            (wx.GraphicsContext.SetBrush, (brush,)),
+            (wx.GraphicsContext.SetFont, (font, brush.Colour)),
             (DoDrawText, (text, x, y))
         ]
         return None, ops
