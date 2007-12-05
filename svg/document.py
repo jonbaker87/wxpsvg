@@ -201,7 +201,11 @@ class SVGDocument(object):
         size = self.state.get("font-size")
         #I'm not sure if this is right or not
         if size:
-            font.SetPointSize(int(size))
+            if '__WXMSW__' in wx.PlatformInfo:
+                i = int(size)
+                font.SetPixelSize((i, i))
+            else:
+                font.SetPointSize(int(size))
         return font
     
     def addTextToDocument(self, node):
@@ -295,7 +299,7 @@ class SVGDocument(object):
             We translate that to [(command, args[0]), (command, args[1])]
             via a generator.
             
-            M is special cased because it's subsequent arguments
+            M is special cased because its subsequent arguments
             become linetos.
             """
             for command, arguments in parseResults:
@@ -311,9 +315,14 @@ class SVGDocument(object):
                         command = "L"
                     for arg in arguments:
                         yield (command, arg)
-        for stroke in normalizeStrokes(pathdata.svg.parseString(data)):  
-        #for stroke in normalizeStrokes(pathdata.svg.parseString("M 100 100")):  
+        print "data length", len(data)
+        import time
+        t = time.time()
+        parsed = pathdata.svg.parseString(data)
+        print "parsed in", time.time()-t
+        for stroke in normalizeStrokes(parsed):
             self.addStrokeToPath(path, stroke)
+        
         
     def generatePathOps(self, path):
         """ Look at the current state and generate the 
