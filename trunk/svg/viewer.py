@@ -265,6 +265,8 @@ class ViewFrame(wx.Frame):
             self.SetStatusText("Rendered in %2f seconds" % self.render.lastRender, self.RENDER_TIME)
         
 if __name__ == '__main__':
+    import psyco
+    psyco.full()
     app = wx.App(0)
     f = ViewFrame(None)
     f.Show()

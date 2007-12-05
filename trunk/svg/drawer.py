@@ -9,10 +9,10 @@ class DrawApp(wx.App):
     def OnExit(self):
         print "exit"
         
-pathOps = dict((k,v) for (k,v) in wx.GraphicsPath.__dict__.iteritems() if k.startswith("Add"))
-pathOps["CloseSubpath"] = wx.GraphicsPath.CloseSubpath
-pathOps["MoveToPoint"] = wx.GraphicsPath.MoveToPoint
-pathOps[""] = None
+#~ pathOps = dict((k,v) for (k,v) in wx.GraphicsPath.__dict__.iteritems() if k.startswith("Add"))
+#~ pathOps["CloseSubpath"] = wx.GraphicsPath.CloseSubpath
+#~ pathOps["MoveToPoint"] = wx.GraphicsPath.MoveToPoint
+#~ pathOps[""] = None
 
         
 class PathGrid(wx.grid.Grid):
@@ -20,7 +20,8 @@ class PathGrid(wx.grid.Grid):
         super(PathGrid, self).__init__(parent)
         self.CreateGrid(100,10)
         firstColAttr = wx.grid.GridCellAttr()
-        choices = sorted(pathOps.keys())
+        #~ choices = sorted(pathOps.keys())
+        choices = []
         firstColAttr.SetEditor(wx.grid.GridCellChoiceEditor(choices))
         self.SetColMinimalWidth(0,140)
         self.SetColAttr(0, firstColAttr)
@@ -73,11 +74,11 @@ class DrawFrame(wx.Frame):
         wx.CallAfter(self.CreateContext)
         #wx.CallAfter(self.shell.SetFocus)
         
-        self.panel.Bind(wx.EVT_SIZE, self.OnSize, source=self.panel)
+        #~ self.panel.Bind(wx.EVT_SIZE, self.OnSize, source=self.panel)
         
         self.panel.Bind(wx.EVT_PAINT, self.panel.OnPaint, source=self.panel)
         
-        self.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.OnPathChange)
+        #~ self.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.OnPathChange)
         
     def CreateContext(self):
         ctx = wx.GraphicsContext_Create(self.panel)
@@ -110,19 +111,14 @@ class DrawFrame(wx.Frame):
             
                 
     def OnSize(self, evt):
-        self.CreateContext()
+        if self.panel.ctx:
+            self.CreateContext()
 
             
         
             
 if __name__ == '__main__':
-    import signal    
-    app = DrawApp(False, clearSigInt=True)
-    def inter(x, y):
-        print "interup"
-        app.ExitMainLoop()
-    signal.signal(signal.SIGBREAK, inter)
-    signal.signal(signal.SIGINT, inter)
+    app = DrawApp(False)
     frame = DrawFrame(None)
     frame.Show()
     app.MainLoop()
