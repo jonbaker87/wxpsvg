@@ -7,7 +7,6 @@ import xml.etree.cElementTree as etree
 import wx
 import wx.aui
 from wx.lib.mixins import treemixin
-
 import svg.document as document
 
 
@@ -177,7 +176,7 @@ class ViewFrame(wx.Frame):
         self.Bind(wx.EVT_CHOICE, self.OnChooseFile)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelectionChange)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateUI)
-        self.filePicker.SetSelection(self.filePicker.FindString('painting-marker-02-f'))
+        self.filePicker.SetSelection(self.filePicker.FindString('paths-data-03-f'))
         self.OnChooseFile(None)
         
                 
