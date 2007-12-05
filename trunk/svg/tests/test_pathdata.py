@@ -2,10 +2,12 @@ import unittest
 from pyparsing import ParseException
 
 from svg.pathdata import *
+   
 
-class TestParserPart(object):
-    valid= []
-    invalid = []
+class TestNumber(unittest.TestCase):
+    parser = number
+    valid = ['1.e10', '1e2', '1e+4', '1e-10','1.', '1.0', '0.1', '.2']
+    invalid = ['e10', '.', 'f', '']
     def testValid(self):
         for num in self.valid:
             self.assertEqual(
@@ -18,14 +20,14 @@ class TestParserPart(object):
                 ParseException,
                 lambda: self.parser.parseString(num)
             )
-            
 
-class TestNumber(unittest.TestCase, TestParserPart):
-    parser = floatingPointConstant
-    valid = ['1.e10', '1e2', '1e+4', '1e-10','1.', '1.0', '0.1', '.2']
-    invalid = ['e10', '.', 'f', '']
+class TestNumberSequence(unittest.TestCase):
+    def testFloatsWithNoSpacing(self):
+        self.assertEqual(
+            [0.4, 0.4],
+            list(Sequence(number).parseString("0.4.4"))
+        )
     
-
 class TestCoords(unittest.TestCase):
     def testCoordPair(self):
         self.assertEqual(
@@ -41,6 +43,7 @@ class TestCoords(unittest.TestCase):
             coordinatePair.parseString('100-100')[0],
             (100.0, -100.0)
         )
+        
     def testCoordPairWithPlus(self):
         self.assertEqual(
             coordinatePair.parseString('100+100')[0],
@@ -50,6 +53,17 @@ class TestCoords(unittest.TestCase):
         self.assertEqual(
             coordinatePair.parseString('100+1e+2')[0],
             (100.0, 100.0)
+        )
+    def testNotAPair(self):
+        self.assertRaises(
+            ParseException,
+            coordinatePair.parseString, "100"
+        )
+        self
+    def testNoSpacing(self):
+        self.assertEqual(
+            coordinatePair.parseString("-1.1.1")[0],
+            (-1.1, 0.1)
         )
 
 class TestMoveTo(unittest.TestCase):
