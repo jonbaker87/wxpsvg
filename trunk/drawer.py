@@ -2,12 +2,6 @@ import wx
 import wx.py.shell
 import wx.aui
 import wx.grid
-
-class DrawApp(wx.App):
-    def OnInit(self):
-        return True
-    def OnExit(self):
-        print "exit"
         
 class PathGrid(wx.grid.Grid):
     def __init__(self, parent, pathOps):
@@ -115,7 +109,7 @@ class DrawFrame(wx.Frame):
         
             
 if __name__ == '__main__':
-    app = DrawApp(False)
+    app = wx.App(False)
     frame = DrawFrame(None)
     frame.Show()
     app.MainLoop()
