@@ -605,13 +605,12 @@ class SVGDocument(object):
             #putting it in a subpath makes the strokes come out 
             #correctly, but it still only fills the slice
             #taking out the MoveToPoint fills correctly.
-            npath = makePath()
-            if rx == ry:
-                npath.AddArc(cnx, cny, rx, firstArc, lastArc, False)
-            else:
-                warnings.warn("elliptical arcs not supported")
-            path.AddPath(npath)
-            npath.MoveToPoint(x,y)
+            path.AddEllipse(cnx-rx, cny-ry, rx*2, ry*2)
+            path.MoveToPoint(x, y)
+            #~ npath = makePath()
+            #~ npath.AddEllipticalArc(cnx-rx, cny-ry, rx*2, ry*2, firstArc, lastArc, False)
+            #~ npath.MoveToPoint(x,y)
+            #~ path.AddPath(npath)
             
         elif type == 'Z':
             #~ Bugginess:
