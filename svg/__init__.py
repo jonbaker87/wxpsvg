@@ -1,7 +1,13 @@
 """
 """
+try:
+    import wxversion
+    #~ wxversion.ensureMinimal('2.9')
+    wxversion.select('3.8-msw-unicode-custom')
+except:
+    pass
 
-import document
 
 def gd():
+    import document
     return document.SVGDocument(document.document)
