@@ -139,9 +139,11 @@ drawToCommand = (
     quadraticBezierCurveto | smoothCurve | curve | horizontalLine | verticalLine
     )
 
+#~ number.debug = True
 moveToDrawToCommands = moveTo + ZeroOrMore(drawToCommand)
 
 svg = ZeroOrMore(moveToDrawToCommands)
+svg.keepTabs = True
 
 def profile():
     import cProfile
