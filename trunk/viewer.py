@@ -1,3 +1,4 @@
+import svg
 import os
 import time
 import pdb
@@ -211,7 +212,7 @@ class ViewFrame(wx.Frame):
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelectionChange)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateUI)
         
-        self.filePicker.SetSelection(self.filePicker.FindString('paths-data-03-f'))
+        self.filePicker.SetSelection(self.filePicker.FindString('shapes-rect-01-t'))
         self.OnChooseFile(None)
         
                 

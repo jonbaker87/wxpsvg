@@ -1,0 +1,22 @@
+Index: src/_graphics.i
+===================================================================
+--- src/_graphics.i	(revision 50471)
++++ src/_graphics.i	(working copy)
+@@ -105,6 +105,8 @@
+     wxPoint2DDouble GetCurrentPoint() const { return wxPoint2D(0,0); }
+     void AddArc( wxDouble, wxDouble, wxDouble, wxDouble, wxDouble, bool ) {}
+     void AddArc( const wxPoint2DDouble& , wxDouble, wxDouble , wxDouble , bool ) {}
++    
++    void AddEllipticalArc(wxDouble, wxDouble, wxDouble, wxDouble, wxDouble, wxDouble, bool ) {}
+ 
+     void AddQuadCurveToPoint( wxDouble, wxDouble, wxDouble, wxDouble ) {}
+     void AddRectangle( wxDouble, wxDouble, wxDouble, wxDouble ) {}
+@@ -548,6 +550,8 @@
+         wxPoint2D , GetCurrentPoint() const,
+         "Gets the last point of the current path, (0,0) if not yet set", "");
+ 
++    void AddEllipticalArc(wxDouble, wxDouble, wxDouble, wxDouble, wxDouble, wxDouble, bool );
++    
+ 
+     %nokwargs AddArc;
+     DocStr(AddArc,

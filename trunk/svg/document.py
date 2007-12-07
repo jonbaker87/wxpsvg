@@ -231,7 +231,7 @@ class SVGDocument(object):
         
     @pathHandler
     def addRectToDocument(self, node, path):
-        x, y, width, height = (attrAsFloat(node, attr) for attr in ['x', 'y', 'width', 'height'])
+        x, y, w, h = (attrAsFloat(node, attr) for attr in ['x', 'y', 'width', 'height'])
         rx = node.get('rx')
         ry = node.get('ry')
         if rx or ry:
@@ -241,13 +241,51 @@ class SVGDocument(object):
                 rx = ry = float(rx)
             elif ry:
                 rx = ry = float(ry)
-            ##TODO: This is totally wrong. Re-implement in terms
-            ##of paths once Arc is implemented reasonably
-            path.AddRoundedRectangle(x,y,width,height,rx)
+            #value clamping as per spec section 9.2
+            rx = min(rx, w/2)
+            ry = min(ry, h/2)
             
+            #origin
+            path.MoveToPoint(x+rx, y)
+            path.AddLineToPoint(x+w-rx, y)
+            #top right
+            cx = rx * 2
+            cy = ry * 2
+            path.AddEllipticalArc(
+                x+w-cx, y,
+                cx, cy,
+                math.radians(270), math.radians(0),
+                True
+            )
+            path.AddLineToPoint(x+w, y+h-ry)
+            #bottom right
+            path.AddEllipticalArc(
+                x+w-cx, y+h-cy,
+                cx, cy,
+                math.radians(0), math.radians(90),
+                True
+            )
+            path.AddLineToPoint(x+rx, y+h)
+            #bottom left
+            path.AddEllipticalArc(
+                x, y+h-cy,
+                cx, cy,
+                math.radians(90),
+                math.radians(180),
+                True
+            )
+            path.AddLineToPoint(x, y+ry)
+            #bottom right
+            path.AddEllipticalArc(
+                x, y,
+                cx, cy,
+                math.radians(180),
+                math.radians(270),
+                True
+            )
         else:
             path.AddRectangle(
-                x, y, width, height
+                x, y, w, h
             )
     
     @pathHandler
