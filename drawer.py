@@ -1,3 +1,4 @@
+import svg
 import wx
 import wx.py.shell
 import wx.aui
@@ -34,7 +35,6 @@ class PathPanel(wx.Panel):
         dc = wx.PaintDC(self)
         self.GetContext()
         if not (self.ctx and self.path):
-            print "no paint"
             return
         self.ctx.DrawPath(self.path)
         
@@ -96,11 +96,11 @@ class DrawFrame(wx.Frame):
     
     def FillPath(self, path):
         for row in xrange(100):
-            print row,
+            #~ print row,
             operation = self.grid.GetCellValue(row, 0)
             if not operation:
                 return
-            print operation,
+            #~ print operation,
             args = []
             for col in xrange(1,20):
                 v = self.grid.GetCellValue(row, col)
@@ -108,7 +108,7 @@ class DrawFrame(wx.Frame):
                     break
                 args.append(float(v))
             self.pathOps[operation](path, *args)
-            print args
+            #~ print args
 
             
         

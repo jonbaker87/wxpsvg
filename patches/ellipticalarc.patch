@@ -1,0 +1,120 @@
+Index: include/wx/graphics.h
+===================================================================
+--- include/wx/graphics.h	(revision 50471)
++++ include/wx/graphics.h	(working copy)
+@@ -259,6 +259,10 @@
+     // gets the last point of the current path, (0,0) if not yet set
+     virtual void GetCurrentPoint( wxDouble* x, wxDouble* y) const = 0;
+ 
++	// adds an arc of an ellipse bounded by (x, y, w, h) from startAngle to endAngle
++	virtual void AddEllipticalArc( wxDouble x, wxDouble y, wxDouble w, wxDouble h, wxDouble startAngle, wxDouble endAngle, bool clockwise ) = 0;
++
++
+     // adds an arc of a circle centering at (x,y) with radius (r) from startAngle to endAngle
+     virtual void AddArc( wxDouble x, wxDouble y, wxDouble r, wxDouble startAngle, wxDouble endAngle, bool clockwise ) = 0;
+ 
+@@ -332,10 +336,14 @@
+     virtual void GetCurrentPoint( wxDouble* x, wxDouble* y) const;
+     wxPoint2DDouble GetCurrentPoint() const;
+ 
+-    // adds an arc of a circle centering at (x,y) with radius (r) from startAngle to endAngle
++    virtual void AddEllipticalArc( wxDouble x, wxDouble y, wxDouble w, wxDouble h, wxDouble startAngle, wxDouble endAngle, bool clockwise );
++	
++	// adds an arc of a circle centering at (x,y) with radius (r) from startAngle to endAngle
+     virtual void AddArc( wxDouble x, wxDouble y, wxDouble r, wxDouble startAngle, wxDouble endAngle, bool clockwise ) ;
+     void AddArc( const wxPoint2DDouble& c, wxDouble r, wxDouble startAngle, wxDouble endAngle, bool clockwise);
+ 
++
++
+     //
+     // These are convenience functions which - if not available natively will be assembled
+     // using the primitives from above
+Index: src/common/graphcmn.cpp
+===================================================================
+--- src/common/graphcmn.cpp	(revision 50471)
++++ src/common/graphcmn.cpp	(working copy)
+@@ -307,6 +307,12 @@
+     GetPathData()->GetCurrentPoint(x,y);
+ }
+ 
++void wxGraphicsPath::AddEllipticalArc(wxDouble x, wxDouble y, wxDouble w, wxDouble h, wxDouble startAngle, wxDouble endAngle, bool clockwise) {
++	AllocExclusive();
++	GetPathData()->AddEllipticalArc(x, y, w, h, startAngle, endAngle, clockwise);
++
++}
++
+ // adds an arc of a circle centering at (x,y) with radius (r) from startAngle to endAngle
+ void wxGraphicsPath::AddArc( wxDouble x, wxDouble y, wxDouble r, wxDouble startAngle, wxDouble endAngle, bool clockwise )
+ {
+Index: src/msw/graphics.cpp
+===================================================================
+--- src/msw/graphics.cpp	(revision 50471)
++++ src/msw/graphics.cpp	(working copy)
+@@ -114,6 +114,9 @@
+     virtual void AddCurveToPoint( wxDouble cx1, wxDouble cy1, wxDouble cx2, wxDouble cy2, wxDouble x, wxDouble y );
+ 
+ 
++	// adds an arc of an ellipse bounded by (x, y, w, h) from startAngle to endAngle
++	virtual void AddEllipticalArc( wxDouble x, wxDouble y, wxDouble w, wxDouble h, wxDouble startAngle, wxDouble endAngle, bool clockwise ) ;
++
+     // adds an arc of a circle centering at (x,y) with radius (r) from startAngle to endAngle
+     virtual void AddArc( wxDouble x, wxDouble y, wxDouble r, wxDouble startAngle, wxDouble endAngle, bool clockwise ) ;
+ 
+@@ -703,28 +706,37 @@
+     *y = start.Y ;
+ }
+ 
++
++void wxGDIPlusPathData::AddEllipticalArc(wxDouble x, wxDouble y, wxDouble w, wxDouble h, double startAngle, double endAngle, bool clockwise) {
++	RectF r(x, y, w, h);
++	double sweepAngle = endAngle - startAngle;
++
++	if( abs(sweepAngle) >= 2*M_PI)
++	{
++		sweepAngle = 2 * M_PI;
++	}
++	else
++	{
++		if ( clockwise )
++		{
++			if( sweepAngle < 0 )
++				sweepAngle += 2 * M_PI;
++		}
++		else
++		{
++			if( sweepAngle > 0 )
++				sweepAngle -= 2 * M_PI;
++
++		}
++	}
++	m_path->AddArc(r, RadToDeg(startAngle),RadToDeg(sweepAngle));
++
++}
++
+ void wxGDIPlusPathData::AddArc( wxDouble x, wxDouble y, wxDouble r, double startAngle, double endAngle, bool clockwise )
+ {
+-    double sweepAngle = endAngle - startAngle ;
+-    if( abs(sweepAngle) >= 2*M_PI)
+-    {
+-        sweepAngle = 2 * M_PI;
+-    }
+-    else
+-    {
+-        if ( clockwise )
+-        {
+-            if( sweepAngle < 0 )
+-                sweepAngle += 2 * M_PI;
+-        }
+-        else
+-        {
+-            if( sweepAngle > 0 )
+-                sweepAngle -= 2 * M_PI;
+-
+-        }
+-   }
+-   m_path->AddArc((REAL) (x-r),(REAL) (y-r),(REAL) (2*r),(REAL) (2*r),RadToDeg(startAngle),RadToDeg(sweepAngle));
++    
++   this->AddEllipticalArc(x-r, y-r, r*2, r*2, startAngle, endAngle, clockwise);
+ }
+ 
+ void wxGDIPlusPathData::AddRectangle( wxDouble x, wxDouble y, wxDouble w, wxDouble h )

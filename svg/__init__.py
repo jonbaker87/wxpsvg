@@ -7,7 +7,6 @@ try:
 except:
     pass
 
-
 def gd():
     import document
     return document.SVGDocument(document.document)
