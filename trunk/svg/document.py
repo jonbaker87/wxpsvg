@@ -305,6 +305,7 @@ class SVGDocument(object):
                 math.radians(270),
                 True
             )
+            path.CloseSubpath()
         else:
             path.AddRectangle(
                 x, y, w, h
@@ -427,7 +428,8 @@ class SVGDocument(object):
             pen = wx.Pen(wx.Colour(*value))
         width = self.state.get('stroke-width')
         if width:
-            pen.SetWidth(float(width))
+            width, units = values.length.parseString(width)
+            pen.SetWidth(width)
         capmap = {
             'butt':wx.CAP_BUTT,
             'round':wx.CAP_ROUND,
