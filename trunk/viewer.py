@@ -208,9 +208,11 @@ class ViewFrame(wx.Frame):
             self.profileLoading = bool(evt.Checked())
         self.Bind(wx.EVT_MENU, OnProfileLoading, id=wx.ID_FORWARD)
         self.Bind(wx.EVT_MENU, self.Reload, id=wx.ID_REFRESH)
+        self.Bind(wx.EVT_MENU, lambda x:self.Destroy(), id=wx.ID_EXIT)
         self.Bind(wx.EVT_CHOICE, self.OnChooseFile)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelectionChange)
         self.Bind(wx.EVT_UPDATE_UI, self.OnUpdateUI)
+        
         
         self.filePicker.SetSelection(self.filePicker.FindString('shapes-rect-01-t'))
         self.OnChooseFile(None)
@@ -220,8 +222,10 @@ class ViewFrame(wx.Frame):
         fileMenu = wx.Menu()
         mi = wx.MenuItem(fileMenu, wx.ID_FORWARD, "Profile loading", kind=wx.ITEM_CHECK)
         fileMenu.AppendItem(mi)
-        fileMenu.Append(wx.ID_OPEN, "&Open\tCtrl-O")
+        fileMenu.Append(wx.ID_OPEN, "&Open")
         fileMenu.Append(wx.ID_REFRESH, "&Reload Current File\tF5")
+        fileMenu.AppendSeparator()
+        fileMenu.Append(wx.ID_EXIT, "E&xit")
         
         
         mb = wx.MenuBar()
