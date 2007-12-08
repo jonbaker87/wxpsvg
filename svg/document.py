@@ -253,6 +253,9 @@ class SVGDocument(object):
         x, y, w, h = (attrAsFloat(node, attr) for attr in ['x', 'y', 'width', 'height'])
         rx = node.get('rx')
         ry = node.get('ry')
+        if not (w and h):
+            path.MoveToPoint(x,y) #keep the current point correct
+            return
         if rx or ry:
             if rx and ry:
                 rx, ry = float(rx), float(ry)
