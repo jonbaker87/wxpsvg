@@ -11,6 +11,7 @@ from functools import wraps
 import pathdata
 import css
 from svg.css.colour import colourValue
+from svg.css import values
 from attributes import paintValue
 
 document = """<?xml version="1.0" standalone="no"?>
@@ -28,11 +29,27 @@ document = """<?xml version="1.0" standalone="no"?>
 
 makePath = lambda: wx.GraphicsRenderer_GetDefaultRenderer().CreatePath()
 
-def attrAsFloat(node, attr):
-        try:
-            return float(node.get(attr, 0))
-        except TypeError:
-            return float(0)
+def attrAsFloat(node, attr, defaultValue="0"):
+    val = node.get(attr, defaultValue)
+    #TODO: process stuff like "inherit" by walking back up the nodes
+    #fast path optimization - if it's a valid float, don't
+    #try to parse it.
+    try:
+        return float(val)
+    except ValueError:
+        return valueToPixels(val)
+    
+def valueToPixels(val, defaultUnits="px"):
+    #TODO manage default units
+    from pyparsing import ParseException
+    try:
+        val, unit = values.length.parseString(val)
+    except ParseException:
+        print "***", val
+        raise
+    #todo: unit conversion to something other than pixels
+    return val
+
 
 def pathHandler(func):
     """decorator for methods which return a path operation
@@ -94,6 +111,7 @@ class SVGDocument(object):
         Parent nodes should return a path (for hittesting), but
         no draw operations
         """
+        #copy the current state
         current = dict(self.state)
         current.update(element.items())
         current.update(css.inlineStyle(element.get("style", "")))
@@ -201,11 +219,12 @@ class SVGDocument(object):
         size = self.state.get("font-size")
         #I'm not sure if this is right or not
         if size:
+            val, unit = values.length.parseString(size)
             if '__WXMSW__' in wx.PlatformInfo:
-                i = int(size)
+                i = int(val)
                 font.SetPixelSize((i, i))
             else:
-                font.SetPointSize(int(size))
+                font.SetPointSize(int(val))
         return font
     
     def addTextToDocument(self, node):
@@ -290,7 +309,7 @@ class SVGDocument(object):
     
     @pathHandler
     def addCircleToDocument(self, node, path):
-        cx, cy, r = [float(node.get(attr, 0)) for attr in ('cx', 'cy', 'r')]
+        cx, cy, r = [attrAsFloat(node, attr) for attr in ('cx', 'cy', 'r')]
         path.AddCircle(cx, cy, r)
         
     @pathHandler
@@ -307,7 +326,7 @@ class SVGDocument(object):
     
     @pathHandler            
     def addLineToDocument(self, node, path):
-        x1, y1, x2, y2 = [float(node.get(attr, 0)) for attr in ('x1', 'y1', 'x2', 'y2')]
+        x1, y1, x2, y2 = [attrAsFloat(node, attr) for attr in ('x1', 'y1', 'x2', 'y2')]
         path.MoveToPoint(x1, y1)
         path.AddLineToPoint(x2, y2)
         
