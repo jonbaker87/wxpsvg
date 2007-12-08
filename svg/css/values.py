@@ -31,7 +31,7 @@ signedNumber = Combine(Optional(sign) + number).setParseAction(asFloat)
 
 lengthValue = Combine(Optional(sign) + number).setParseAction(asFloatOrInt)
 
-#TODO: The physical units line in
+#TODO: The physical units like in, mm
 lengthUnit = CaselessLiteral("em") | CaselessLiteral("ex") | CaselessLiteral("px")
 #percentags
 lengthUnit |= CaselessLiteral("%")

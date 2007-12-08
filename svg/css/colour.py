@@ -278,5 +278,6 @@ def fillCSS2SystemColours():
         "WindowText": wx.SYS_COLOUR_WINDOWTEXT
     }
     NamedColours.update(
-        (k.lower(), wx.SystemSettings.GetColour(v)) for (k,v) in systemColors.iteritems()
+        #strip the alpha from the system colors. Is this really what we want to do?
+        (k.lower(), wx.SystemSettings.GetColour(v)[:3]) for (k,v) in systemColors.iteritems()
     )
