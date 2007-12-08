@@ -72,3 +72,12 @@ class TestBrushFromColourValue(unittest.TestCase):
             self.document.getBrushFromState().GetColour().Get(),
             (255,0,0)
         )
+        
+class TestValueToPixels(unittest.TestCase):
+    """ Make sure that CSS length values get converted correctly to pixels"""
+    def testDefault(self):
+        got = document.valueToPixels("12")
+        self.assertEqual(got, 12)
+    def testPointConversion(self):
+        got = document.valueToPixels('14pt')
+        self.assertEqual(got, 22)
