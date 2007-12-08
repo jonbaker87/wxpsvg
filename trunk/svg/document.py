@@ -215,6 +215,7 @@ class SVGDocument(object):
         font = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
         family = self.state.get("font-family")
         if False:#family:
+            print "setting font", family
             font.SetFaceName(family)
         size = self.state.get("font-size")
         #I'm not sure if this is right or not
@@ -239,7 +240,11 @@ class SVGDocument(object):
             context.DrawText(text, x, y, brush)
         font = self.getFontFromState()
         brush = self.getBrushFromState()
-        text = node.text
+        if not (brush and brush.IsOk()):
+            brush = wx.BLACK_BRUSH
+        #normalize whitespace
+        #TODO: SVG probably has rules for this
+        text = ' '.join(node.text.split() if node.text else "")
         if text is None:
             return None, []
         ops = [
