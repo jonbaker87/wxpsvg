@@ -1,7 +1,7 @@
 import unittest
 import svg.attributes as a
 
-from .test_css import TestValueParser
+from css.test_color import TestValueParser
 
 
 class TestURLParser(unittest.TestCase):
