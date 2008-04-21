@@ -24,10 +24,10 @@ class TestTransformParser(unittest.TestCase):
     def testTransformList(self):
         self.assertEqual(
             transformList.parseString(
-                "matrix(1,2,3,4) translate(-10), scale(23, 45.9)"
+                "matrix(1,2,3,4,5,6) translate(-10), scale(23, 45.9)"
             ).asList(),
             [
-                ["matrix", [1,2,3,4]],
+                ["matrix", [1,2,3,4,5,6]],
                 ["translate", [-10]],
                 ["scale", [23, 45.9]]
             ]
@@ -44,7 +44,7 @@ class TestTransformParser(unittest.TestCase):
                 ParseException,
                 transform.parseString,
                 string
-            ) 
+            )
     def testPartsGood(self):
         for parser, string, result in transformTestsGood:
             self.assertEqual(
@@ -58,5 +58,16 @@ class TestTransformParser(unittest.TestCase):
                 parser.parseString,
                 string
             )
+    def testMatrixTransform(self):
+        src = "matrix(0.966764,0.000000,0.000000,1.062970,-8.322865,-4.427016)"
+        expected = [[
+            'matrix',
+            [0.966764, 0.0, 0.0, 1.062970, -8.322865, -4.427016]
+        ]]
+        self.assertEqual(
+            transformList.parseString(src).asList(),
+            expected
+        )
 
-    
+
+

@@ -2,9 +2,9 @@
     Parsing for CSS and CSS-style values, such as transform and filter attributes.
 """
 
-from pyparsing import (Literal, Word, CaselessLiteral, 
+from pyparsing import (Literal, Word, CaselessLiteral,
     Optional, Combine, Forward, ZeroOrMore, nums, oneOf, Group, delimitedList)
-    
+
 #some shared definitions from pathdata
 
 from ..pathdata import number, maybeComma
@@ -14,7 +14,7 @@ cparen = Literal(")").suppress()
 
 def Parenthised(exp):
     return Group(paren + exp + cparen)
-    
+
 skewY = Literal("skewY") + Parenthised(number)
 
 skewX = Literal("skewX") + Parenthised(number)
@@ -33,7 +33,13 @@ translate = Literal("translate") + Parenthised(
 )
 
 matrix = Literal("matrix") + Parenthised(
-    number + maybeComma + number + maybeComma + number + maybeComma + number
+    #there's got to be a better way to write this
+    number + maybeComma +
+    number + maybeComma +
+    number + maybeComma +
+    number + maybeComma +
+    number + maybeComma +
+    number
 )
 
 transform = (skewY | skewX | rotate | scale | translate | matrix)

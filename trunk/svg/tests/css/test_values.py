@@ -19,22 +19,22 @@ class ParseTester(object):
 class TestInteger(unittest.TestCase, ParseTester):
     parser = values.integer
     valid = [(x, int(x)) for x in ["01", "1"]]
-    
-            
+
+
 class TestNumber(unittest.TestCase, ParseTester):
     parser = values.number
     valid = [(x, float(x)) for x in ["1.1", "2.3", ".3535"]]
     valid += TestInteger.valid
-        
+
 class TestSignedNumber(unittest.TestCase, ParseTester):
     parser = values.signedNumber
     valid = [(x, float(x)) for x in ["+1.1", "-2.3"]]
     valid += TestNumber.valid
-    
+
 class TestLengthUnit(unittest.TestCase, ParseTester):
     parser = values.lengthUnit
-    valid = [(x,x.lower()) for x in ["em", "ex", "px", "PX", "EX", "EM"]]
-        
+    valid = [(x,x.lower()) for x in ["em", "ex", "px", "PX", "EX", "EM", "%"]]
+
 class TestLength(unittest.TestCase):
     parser = values.length
     valid = [
@@ -43,24 +43,29 @@ class TestLength(unittest.TestCase):
         ("10045px", (10045, "px")),
         ("300%", (300, "%")),
     ]
-    
+
     def testValidValues(self):
         for string, expected in self.valid:
             #~ print string, expected
             got = self.parser.parseString(string)
             self.assertEqual(expected, tuple(got))
-            
+
     def testIntegersIfPossible(self):
         results = self.parser.parseString("100px")[0]
         self.assertTrue(isinstance(results, int))
-        
-    def testNoSpaceInPercent(self):
-        """ SVG spec requires that the percent "immediately"
-        follow the number"""
+
+    def testNoSpaceBetweenValueAndUnit(self):
+        """ CSS spec section 4.3.2 requires that the
+        length identifier immediately follow the value
+        """
         self.assertRaises(
             ParseException,
             self.parser.parseString,
             "300 %"
-        )   
-        
-    
+        )
+        self.assertRaises(
+            ParseException,
+            self.parser.parseString,
+            "300 px"
+        )
+
