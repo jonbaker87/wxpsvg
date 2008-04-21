@@ -12,7 +12,7 @@ minimalSVG = etree.parse(StringIO(r"""<?xml version="1.0" standalone="no"?>
 app = None
 
 class TestBrushFromColourValue(unittest.TestCase):
-    
+
     def setUp(self):
         #need a wxApp for this
         global app
@@ -72,7 +72,7 @@ class TestBrushFromColourValue(unittest.TestCase):
             self.document.getBrushFromState().GetColour().Get(),
             (255,0,0)
         )
-        
+
 class TestValueToPixels(unittest.TestCase):
     """ Make sure that CSS length values get converted correctly to pixels"""
     def testDefault(self):
